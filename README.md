@@ -6,7 +6,8 @@ Link para a documentação atualizada: [https://developers.oimenu.com.br](https:
 
 ## Instalação Manual
 
-É possível baixar a última versão em [latest release](https://github.com/oimenu/oimenu-delphi/releases). Para utilizar o OiMenu SDK, descompacte o arquivo baixado na pasta de seu projeto e inclua o arquivo OiMenuUtil.pas ao seu projeto.
+É possível baixar a última versão em [latest release](https://github.com/oimenu/oimenu-delphi/releases).
+Para utilizar o OiMenu SDK, descompacte o arquivo baixado na pasta de seu projeto e também inclua o arquivo OiMenuUtil.pas.
 
 
 ## Dependências
