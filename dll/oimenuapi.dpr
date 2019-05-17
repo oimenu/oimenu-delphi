@@ -31,6 +31,14 @@ uses
 
   //ORDER
   type
+    TOrderProduct = class
+      code                : PChar;
+      name                : PChar;
+      quantity            : Integer;
+      price               : Double;
+  end;
+
+  type
     TOrderItemOption = class
       id                  : PChar;
       optionId            : PChar;
@@ -452,7 +460,7 @@ uses
 
   //ITEM
   type
-    TITemResult = class
+    TItemResult = class
       success             : Boolean;
       message             : PChar;
       responseCode        : Integer;
@@ -529,6 +537,7 @@ begin
       jsonObj.put('code', 200);
     if (jsonObj.has('message') = false) then
       jsonObj.put('message', '');
+
     Result := jsonObj;
   end;
 
@@ -702,7 +711,9 @@ begin
       order.id := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getString('id'));
       order.date := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getString('date'));
       order.table := jsonObj.getJSONArray('data').getJSONObject(x).getInt('table');
-      order.card := jsonObj.getJSONArray('data').getJSONObject(x).getInt('card');
+      if (jsonObj.getJSONArray('data').getJSONObject(x).has('card')) then
+        if (jsonObj.getJSONArray('data').getJSONObject(x).isNull('card') = false) then
+          order.card := jsonObj.getJSONArray('data').getJSONObject(x).getInt('card');
       for y := 0 to jsonObj.getJSONArray('data').getJSONObject(x).getJSONArray('items').length-1 do
       begin
         orderItem := TOrderItem.Create;
@@ -782,6 +793,23 @@ begin
   Result := simpleResult;
 end;
 
+function transferTable(token: String; code: Integer; codeNew: Integer ): TSimpleResult;stdcall;
+var
+  simpleResult: TSimpleResult;
+  jsonObj: TJSONObject;
+begin
+  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(code) + '/transfer', '{"new_table":'+IntToStr(codeNew)+'}');
+
+  simpleResult := TSimpleResult.Create;
+
+  simpleResult.success := jsonObj.getBoolean('success');
+  simpleResult.message := PChar(jsonObj.getString('message'));
+  simpleResult.responseCode := jsonObj.getInt('code');
+  simpleResult.count := 0;
+
+  Result := simpleResult;
+end;
+
 function cancelTable(token: String; code: Integer ): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
@@ -797,6 +825,207 @@ begin
   simpleResult.count := 0;
 
   Result := simpleResult;
+end;
+
+function createTableItem(token: String; codeTable: Integer; product: TOrderProduct): TItemResult;stdcall;
+var
+  itemResult: TItemResult;
+  jsonObj: TJSONObject;
+  orderItem: TOrderItem;
+  orderItemOption: TOrderItemOption;
+  x, y: Integer;
+begin
+  jsonObj := TJSONObject.create;
+  jsonObj.put('code', product.code);
+  jsonObj.put('name', product.name);
+  jsonObj.put('price', product.price);
+  jsonObj.put('quantity', product.quantity);
+
+  jsonObj := getJson(token, 'POST', 'table/' + IntToStr(codeTable) + '/item', jsonObj.toString);
+
+  itemResult := TItemResult.Create;
+
+  itemResult.success := jsonObj.getBoolean('success');
+  itemResult.message := PChar(jsonObj.getString('message'));
+  itemResult.responseCode := jsonObj.getInt('code');
+
+  if (itemResult.success) then
+  begin
+    itemResult.count := 1;
+    orderItem := TOrderItem.Create;
+    orderItem.id := PChar(jsonObj.getJSONObject('data').getString('id'));
+    orderItem.code := PChar(jsonObj.getJSONObject('data').getString('code'));
+    orderItem.name := PChar(jsonObj.getJSONObject('data').getString('name'));
+    orderItem.quantity := jsonObj.getJSONObject('data').getInt('quantity');
+    orderItem.price := jsonObj.getJSONObject('data').getDouble('price');
+
+    for x := 0 to jsonObj.getJSONObject('data').getJSONArray('notes').length-1 do
+      orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONArray('notes').getString(x));
+
+    orderItem.extraFields := PChar(jsonObj.getJSONObject('data').getString('extra_fields'));
+
+    for x := 0 to jsonObj.getJSONObject('data').getJSONArray('options').length-1 do
+    begin
+      orderItemOption := TOrderItemOption.Create;
+      orderItemOption.id := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('id'));
+      orderItemOption.optionId := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('option_id'));
+      orderItemOption.code := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('code'));
+      orderItemOption.name := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('name'));
+      orderItemOption.quantity := jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getInt('quantity');
+      orderItemOption.price := jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getDouble('price');
+
+      for y := 0 to jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getJSONArray('notes').length-1 do
+        orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getJSONArray('notes').getString(y));
+
+      orderItemOption.extraFields := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('extra_fields'));
+      orderItem.options.Add(orderItemOption);
+    end;
+    itemResult.data := orderItem;
+  end else begin
+    itemResult.count := 0;
+  end;
+  
+  Result := itemResult;
+end;
+
+function updateTableItem(token: String; codeTable: Integer; idItem: String; quantity: Integer; price: Double ): TItemResult;stdcall;
+var
+  itemResult: TItemResult;
+  jsonObj: TJSONObject;   
+  orderItem: TOrderItem;
+  orderItemOption: TOrderItemOption;
+  x, y: Integer;
+begin
+  jsonObj := TJSONObject.create;
+  jsonObj.put('quantity', quantity);
+  jsonObj.put('price', price);
+
+  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(codeTable) + '/item/' + idItem, jsonObj.toString);
+
+  itemResult := TItemResult.Create;
+
+  itemResult.success := jsonObj.getBoolean('success');
+  itemResult.message := PChar(jsonObj.getString('message'));
+  itemResult.responseCode := jsonObj.getInt('code');
+
+  if (itemResult.success) then
+  begin
+    itemResult.count := 1;
+    orderItem := TOrderItem.Create;
+    orderItem.id := PChar(jsonObj.getJSONObject('data').getString('id'));
+    orderItem.code := PChar(jsonObj.getJSONObject('data').getString('code'));
+    orderItem.name := PChar(jsonObj.getJSONObject('data').getString('name'));
+    orderItem.quantity := jsonObj.getJSONObject('data').getInt('quantity');
+    orderItem.price := jsonObj.getJSONObject('data').getDouble('price');
+
+    for x := 0 to jsonObj.getJSONObject('data').getJSONArray('notes').length-1 do
+      orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONArray('notes').getString(x));
+
+    orderItem.extraFields := PChar(jsonObj.getJSONObject('data').getString('extra_fields'));
+
+    for x := 0 to jsonObj.getJSONObject('data').getJSONArray('options').length-1 do
+    begin
+      orderItemOption := TOrderItemOption.Create;
+      orderItemOption.id := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('id'));
+      orderItemOption.optionId := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('option_id'));
+      orderItemOption.code := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('code'));
+      orderItemOption.name := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('name'));
+      orderItemOption.quantity := jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getInt('quantity');
+      orderItemOption.price := jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getDouble('price');
+
+      for y := 0 to jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getJSONArray('notes').length-1 do
+        orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getJSONArray('notes').getString(y));
+
+      orderItemOption.extraFields := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('extra_fields'));
+      orderItem.options.Add(orderItemOption);
+    end;
+    itemResult.data := orderItem;
+  end else begin
+    itemResult.count := 0;
+  end;
+
+  Result := itemResult;
+end;
+
+function transferTableItem(token: String; codeTable: Integer; codeTableNew: Integer; idItem: String): TItemResult;stdcall;
+var
+  itemResult: TItemResult;
+  jsonObj: TJSONObject;
+  orderItem: TOrderItem;
+  orderItemOption: TOrderItemOption;
+  x, y: Integer;
+begin
+  jsonObj := TJSONObject.create;
+  jsonObj.put('new_table', codeTableNew);
+
+  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(codeTable) + '/item/' + idItem + '/transfer', jsonObj.toString);
+
+  itemResult := TItemResult.Create;
+
+  itemResult.success := jsonObj.getBoolean('success');
+  itemResult.message := PChar(jsonObj.getString('message'));
+  itemResult.responseCode := jsonObj.getInt('code');
+  Result := itemResult;
+end;
+
+function transferTableItemQtd(token: String; codeTable: Integer; codeTableNew: Integer; idItem: String; quantity: Integer): TItemResult;stdcall;
+var
+  itemResult: TItemResult;
+  jsonObj: TJSONObject;
+
+  orderItem: TOrderItem;
+  orderItemOption: TOrderItemOption;
+  x, y: Integer;
+begin
+  jsonObj := TJSONObject.create;
+  jsonObj.put('new_table', codeTableNew);
+  jsonObj.put('quantity', quantity);
+
+  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(codeTable) + '/item/' + idItem + '/transfer', jsonObj.toString);
+
+  itemResult := TItemResult.Create;
+
+  itemResult.success := jsonObj.getBoolean('success');
+  itemResult.message := PChar(jsonObj.getString('message'));
+  itemResult.responseCode := jsonObj.getInt('code');
+
+  if (itemResult.success) then
+  begin
+    itemResult.count := 1;
+    orderItem := TOrderItem.Create;
+    orderItem.id := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getString('id'));
+    orderItem.code := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getString('code'));
+    orderItem.name := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getString('name'));
+    orderItem.quantity := jsonObj.getJSONObject('data').getJSONObject('new_item').getInt('quantity');
+    orderItem.price := jsonObj.getJSONObject('data').getJSONObject('new_item').getDouble('price');
+
+    for x := 0 to jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('notes').length-1 do
+      orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('notes').getString(x));
+
+    orderItem.extraFields := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getString('extra_fields'));
+
+    for x := 0 to jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').length-1 do
+    begin
+      orderItemOption := TOrderItemOption.Create;
+      orderItemOption.id := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getString('id'));
+      orderItemOption.optionId := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getString('option_id'));
+      orderItemOption.code := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getString('code'));
+      orderItemOption.name := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getString('name'));
+      orderItemOption.quantity := jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getInt('quantity');
+      orderItemOption.price := jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getDouble('price');
+
+      for y := 0 to jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getJSONArray('notes').length-1 do
+        orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getJSONArray('notes').getString(y));
+
+      orderItemOption.extraFields := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getString('extra_fields'));
+      orderItem.options.Add(orderItemOption);
+    end;
+    itemResult.data := orderItem;
+  end else begin
+    itemResult.count := 0;
+  end;
+
+  Result := itemResult;
 end;
 
 function cancelTableItem(token: String; code: Integer; idItem: String ): TItemResult; stdcall;
@@ -846,6 +1075,7 @@ begin
       orderItemOption.extraFields := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('extra_fields'));
       orderItem.options.Add(orderItemOption);
     end;
+    itemResult.data := orderItem;
   end else begin
     itemResult.count := 0;
   end;
@@ -901,6 +1131,7 @@ begin
       orderItemOption.extraFields := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('extra_fields'));
       orderItem.options.Add(orderItemOption);
     end;
+    itemResult.data := orderItem;
   end else begin
     itemResult.count := 0;
   end;
@@ -929,6 +1160,23 @@ begin
   Result := simpleResult;
 end;
 
+function transferCard(token: String; code: Integer; codeNew: Integer ): TSimpleResult;stdcall;
+var
+  simpleResult: TSimpleResult;
+  jsonObj: TJSONObject;
+begin
+  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(code) + '/transfer', '{"new_card":'+IntToStr(codeNew)+'}');
+
+  simpleResult := TSimpleResult.Create;
+
+  simpleResult.success := jsonObj.getBoolean('success');
+  simpleResult.message := PChar(jsonObj.getString('message'));
+  simpleResult.responseCode := jsonObj.getInt('code');
+  simpleResult.count := 0;
+
+  Result := simpleResult;
+end;
+
 function cancelCard(token: String; code: Integer ): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
@@ -944,6 +1192,208 @@ begin
   simpleResult.count := 0;
 
   Result := simpleResult;
+end;
+
+function createCardItem(token: String; codeCard: Integer; product: TOrderProduct): TItemResult;stdcall;
+var
+  itemResult: TItemResult;
+  jsonObj: TJSONObject;
+  orderItem: TOrderItem;
+  orderItemOption: TOrderItemOption;
+  x, y: Integer;
+begin
+  jsonObj := TJSONObject.create;
+  jsonObj.put('code', product.code);
+  jsonObj.put('name', product.name);
+  jsonObj.put('price', product.price);
+  jsonObj.put('quantity', product.quantity);
+
+  jsonObj := getJson(token, 'POST', 'card/' + IntToStr(codeCard) + '/item', jsonObj.toString);
+
+  itemResult := TItemResult.Create;
+
+  itemResult.success := jsonObj.getBoolean('success');
+  itemResult.message := PChar(jsonObj.getString('message'));
+  itemResult.responseCode := jsonObj.getInt('code');
+
+  if (itemResult.success) then
+  begin
+    itemResult.count := 1;
+    orderItem := TOrderItem.Create;
+    orderItem.id := PChar(jsonObj.getJSONObject('data').getString('id'));
+    orderItem.code := PChar(jsonObj.getJSONObject('data').getString('code'));
+    orderItem.name := PChar(jsonObj.getJSONObject('data').getString('name'));
+    orderItem.quantity := jsonObj.getJSONObject('data').getInt('quantity');
+    orderItem.price := jsonObj.getJSONObject('data').getDouble('price');
+
+    for x := 0 to jsonObj.getJSONObject('data').getJSONArray('notes').length-1 do
+      orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONArray('notes').getString(x));
+
+    orderItem.extraFields := PChar(jsonObj.getJSONObject('data').getString('extra_fields'));
+
+    for x := 0 to jsonObj.getJSONObject('data').getJSONArray('options').length-1 do
+    begin
+      orderItemOption := TOrderItemOption.Create;
+      orderItemOption.id := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('id'));
+      orderItemOption.optionId := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('option_id'));
+      orderItemOption.code := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('code'));
+      orderItemOption.name := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('name'));
+      orderItemOption.quantity := jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getInt('quantity');
+      orderItemOption.price := jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getDouble('price');
+
+      for y := 0 to jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getJSONArray('notes').length-1 do
+        orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getJSONArray('notes').getString(y));
+
+      orderItemOption.extraFields := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('extra_fields'));
+      orderItem.options.Add(orderItemOption);
+    end;
+    itemResult.data := orderItem;
+  end else begin
+    itemResult.count := 0;
+  end;
+
+  Result := itemResult;
+end;
+
+function updateCardItem(token: String; codeCard: Integer; idItem: String; quantity: Integer; price: Double ): TItemResult;stdcall;
+var
+  itemResult: TItemResult;
+  jsonObj: TJSONObject;   
+  orderItem: TOrderItem;
+  orderItemOption: TOrderItemOption;
+  x, y: Integer;
+begin
+  jsonObj := TJSONObject.create;
+  jsonObj.put('quantity', quantity);
+  jsonObj.put('price', price);
+
+  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(codeCard) + '/item/' + idItem, jsonObj.toString);
+
+  itemResult := TItemResult.Create;
+
+  itemResult.success := jsonObj.getBoolean('success');
+  itemResult.message := PChar(jsonObj.getString('message'));
+  itemResult.responseCode := jsonObj.getInt('code');
+
+  if (itemResult.success) then
+  begin
+    itemResult.count := 1;
+    orderItem := TOrderItem.Create;
+    orderItem.id := PChar(jsonObj.getJSONObject('data').getString('id'));
+    orderItem.code := PChar(jsonObj.getJSONObject('data').getString('code'));
+    orderItem.name := PChar(jsonObj.getJSONObject('data').getString('name'));
+    orderItem.quantity := jsonObj.getJSONObject('data').getInt('quantity');
+    orderItem.price := jsonObj.getJSONObject('data').getDouble('price');
+
+    for x := 0 to jsonObj.getJSONObject('data').getJSONArray('notes').length-1 do
+      orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONArray('notes').getString(x));
+
+    orderItem.extraFields := PChar(jsonObj.getJSONObject('data').getString('extra_fields'));
+
+    for x := 0 to jsonObj.getJSONObject('data').getJSONArray('options').length-1 do
+    begin
+      orderItemOption := TOrderItemOption.Create;
+      orderItemOption.id := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('id'));
+      orderItemOption.optionId := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('option_id'));
+      orderItemOption.code := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('code'));
+      orderItemOption.name := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('name'));
+      orderItemOption.quantity := jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getInt('quantity');
+      orderItemOption.price := jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getDouble('price');
+
+      for y := 0 to jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getJSONArray('notes').length-1 do
+        orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getJSONArray('notes').getString(y));
+
+      orderItemOption.extraFields := PChar(jsonObj.getJSONObject('data').getJSONArray('options').getJSONObject(x).getString('extra_fields'));
+      orderItem.options.Add(orderItemOption);
+    end;
+    itemResult.data := orderItem;
+  end else begin
+    itemResult.count := 0;
+  end;
+
+  Result := itemResult;
+end;
+
+function transferCardItem(token: String; codeCard: Integer; codeCardNew: Integer; idItem: String): TItemResult;stdcall;
+var
+  itemResult: TItemResult;
+  jsonObj: TJSONObject;
+  orderItem: TOrderItem;
+  orderItemOption: TOrderItemOption;
+  x, y: Integer;
+begin
+  jsonObj := TJSONObject.create;
+  jsonObj.put('new_table', codeCardNew);
+
+  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(codeCard) + '/item/' + idItem + '/transfer', jsonObj.toString);
+
+  itemResult := TItemResult.Create;
+
+  itemResult.success := jsonObj.getBoolean('success');
+  itemResult.message := PChar(jsonObj.getString('message'));
+  itemResult.responseCode := jsonObj.getInt('code');
+
+  Result := itemResult;
+end;
+
+function transferCardItemQtd(token: String; codeCard: Integer; codeCardNew: Integer; idItem: String; quantity: Integer): TItemResult;stdcall;
+var
+  itemResult: TItemResult;
+  jsonObj: TJSONObject;
+
+  orderItem: TOrderItem;
+  orderItemOption: TOrderItemOption;
+  x, y: Integer;
+begin
+  jsonObj := TJSONObject.create;
+  jsonObj.put('new_table', codeCardNew);
+  jsonObj.put('quantity', quantity);
+
+  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(codeCard) + '/item/' + idItem + '/transfer', jsonObj.toString);
+
+  itemResult := TItemResult.Create;
+
+  itemResult.success := jsonObj.getBoolean('success');
+  itemResult.message := PChar(jsonObj.getString('message'));
+  itemResult.responseCode := jsonObj.getInt('code');
+
+  if (itemResult.success) then
+  begin
+    itemResult.count := 1;
+    orderItem := TOrderItem.Create;
+    orderItem.id := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getString('id'));
+    orderItem.code := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getString('code'));
+    orderItem.name := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getString('name'));
+    orderItem.quantity := jsonObj.getJSONObject('data').getJSONObject('new_item').getInt('quantity');
+    orderItem.price := jsonObj.getJSONObject('data').getJSONObject('new_item').getDouble('price');
+
+    for x := 0 to jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('notes').length-1 do
+      orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('notes').getString(x));
+
+    orderItem.extraFields := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getString('extra_fields'));
+
+    for x := 0 to jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').length-1 do
+    begin
+      orderItemOption := TOrderItemOption.Create;
+      orderItemOption.id := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getString('id'));
+      orderItemOption.optionId := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getString('option_id'));
+      orderItemOption.code := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getString('code'));
+      orderItemOption.name := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getString('name'));
+      orderItemOption.quantity := jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getInt('quantity');
+      orderItemOption.price := jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getDouble('price');
+
+      for y := 0 to jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getJSONArray('notes').length-1 do
+        orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getJSONArray('notes').getString(y));
+
+      orderItemOption.extraFields := PChar(jsonObj.getJSONObject('data').getJSONObject('new_item').getJSONArray('options').getJSONObject(x).getString('extra_fields'));
+      orderItem.options.Add(orderItemOption);
+    end;
+    itemResult.data := orderItem;
+  end else begin
+    itemResult.count := 0;
+  end;
+
+  Result := itemResult;
 end;
 
 function cancelCardItem(token: String; code: Integer; idItem: String ): TItemResult; stdcall;
@@ -1570,11 +2020,21 @@ exports
   getAllOrders,
   setOrderAsReceived,
   closeTable,
+  transferTable,
   cancelTable,
+  createTableItem,
+  updateTableItem,
+  transferTableItem,
+  transferTableItemQtd,
   cancelTableItem,
   cancelTableItemQtd,
   closeCard,
+  transferCard,
   cancelCard,
+  createCardItem,
+  updateCardItem,
+  transferCardItem,
+  transferCardItemQtd,
   cancelCardItem,
   cancelCardItemQtd,
   getAllTables,

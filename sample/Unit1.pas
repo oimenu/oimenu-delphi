@@ -38,6 +38,16 @@ type
     btnBatchUser: TButton;
     btnUpdateUser: TButton;
     btnDeleteUser: TButton;
+    btnTransferTable: TButton;
+    btnCreateTableItem: TButton;
+    btnUpdateTableItem: TButton;
+    btnTrasnferTableItem: TButton;
+    btnTrasnferTableItemQtd: TButton;
+    btnUpdateCardItem: TButton;
+    btnCreateCardItem: TButton;
+    btnTransferCard: TButton;
+    btnTransferCardItem: TButton;
+    btnTransferCardItemQtd: TButton;
 
     procedure btnCreateProductClick(Sender: TObject);
     procedure btnBatchProductClick(Sender: TObject);
@@ -68,6 +78,16 @@ type
     procedure btnBatchUserClick(Sender: TObject);
     procedure btnUpdateUserClick(Sender: TObject);
     procedure btnDeleteUserClick(Sender: TObject);
+    procedure btnTransferTableClick(Sender: TObject);
+    procedure btnCreateTableItemClick(Sender: TObject);
+    procedure btnUpdateTableItemClick(Sender: TObject);
+    procedure btnTrasnferTableItemClick(Sender: TObject);
+    procedure btnTrasnferTableItemQtdClick(Sender: TObject);
+    procedure btnTransferCardClick(Sender: TObject);
+    procedure btnCreateCardItemClick(Sender: TObject);
+    procedure btnUpdateCardItemClick(Sender: TObject);
+    procedure btnTransferCardItemClick(Sender: TObject);
+    procedure btnTransferCardItemQtdClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -78,7 +98,7 @@ var
   Form1: TForm1;
 
 const
-  TOKEN = 'OIMENU-TOKEN'; 
+  TOKEN = 'OIMENU-TOKEN';
 
 implementation
 
@@ -91,7 +111,7 @@ var
   product : TProduct;
 begin
   product := TProduct.Create;
-  product.code := '106';
+  product.code := '1062';
   product.name := 'Chopp da Casa 600ml';
   product.price := 6.50;
   product.extraFields := '{"any_field":1}';
@@ -103,6 +123,7 @@ begin
   begin
     product := productResult.data.Items[0];
     memo1.Lines.Add(product.name);
+    memo1.Lines.Add(FloatToStr(product.price));
   end else begin
     memo1.Lines.Add(productResult.message);
   end;
@@ -189,7 +210,8 @@ procedure TForm1.btnGetAllOrdersClick(Sender: TObject);
 var
   orderResult : TOrderResult;
   order : TOrder;
-  x: Integer;
+  orderItem : TOrderItem;
+  x, y: Integer;
 begin
   orderResult := getAllOrders(TOKEN);
 
@@ -202,6 +224,16 @@ begin
       memo1.Lines.Add(order.id);
       memo1.Lines.Add(IntToStr(order.table));
       memo1.Lines.Add(IntToStr(order.card));
+      for y := 0 to order.items.Count - 1 do
+      begin
+        orderItem := order.items.Items[y];
+        memo1.Lines.Add('  '+orderItem.id);
+        memo1.Lines.Add('  '+orderItem.code);
+        memo1.Lines.Add('  '+orderItem.name);
+        memo1.Lines.Add('  '+IntToStr(orderItem.quantity));
+        memo1.Lines.Add('  '+FloatToStr(orderItem.price));
+        memo1.Lines.Add('  ');
+      end;
     end;
   end else begin
     memo1.Lines.Add(orderResult.message);
@@ -716,6 +748,197 @@ begin
   end else begin
     memo1.Lines.Add(simpleResult.message);
   end;
+end;
+
+procedure TForm1.btnTransferTableClick(Sender: TObject);
+var
+  simpleResult : TSimpleResult;
+begin
+  simpleResult := transferTable(TOKEN, 2, 1);
+
+  memo1.Lines.Clear;
+  if (simpleResult.success) then
+  begin
+    memo1.Lines.Add('OK');
+  end else begin
+    memo1.Lines.Add(simpleResult.message);
+  end;
+
+end;
+
+procedure TForm1.btnCreateTableItemClick(Sender: TObject);
+var
+  itemResult : TItemResult;
+  product : TOrderProduct;
+  item: TOrderItem;
+begin
+  product := TOrderProduct.Create;
+  product.code := '1062';
+  product.name := 'Chopp da Casa 600ml';
+  product.price := 6.50;
+  product.quantity := 1;
+
+  itemResult := createTableItem(TOKEN, 2, product);
+
+  memo1.Lines.Clear;
+  if (itemResult.success) then
+  begin
+    item := itemResult.data;
+    memo1.Lines.Add(item.name);
+    memo1.Lines.Add(IntToStr(item.quantity));
+    memo1.Lines.Add(FloatToStr(item.price));
+  end else begin
+    memo1.Lines.Add(itemResult.message);
+  end;
+
+end;
+
+procedure TForm1.btnUpdateTableItemClick(Sender: TObject);
+var
+  itemResult : TItemResult;
+  item: TOrderItem;
+begin
+  itemResult := updateTableItem(TOKEN, 1, 'ASDF', 16, 2.90);
+
+  memo1.Lines.Clear;
+  if (itemResult.success) then
+  begin
+    item := itemResult.data;
+    memo1.Lines.Add(item.name);
+  end else begin
+    memo1.Lines.Add(itemResult.message);
+  end;
+
+end;
+
+procedure TForm1.btnTrasnferTableItemClick(Sender: TObject);
+var
+  itemResult : TItemResult;
+  item: TOrderItem;
+begin
+  itemResult := transferTableItem(TOKEN, 2, 1, 'ASDF');
+
+  memo1.Lines.Clear;
+  if (itemResult.success) then
+  begin
+    memo1.Lines.Add('OK');
+  end else begin
+    memo1.Lines.Add(itemResult.message);
+  end;
+
+end;
+
+procedure TForm1.btnTrasnferTableItemQtdClick(Sender: TObject);
+var
+  itemResult : TItemResult;
+  item: TOrderItem;
+begin
+  itemResult := transferTableItemQtd(TOKEN, 1, 2, 'ASDF', 1);
+
+  memo1.Lines.Clear;
+  if (itemResult.success) then
+  begin
+    item := itemResult.data;
+    memo1.Lines.Add(item.name);
+  end else begin
+    memo1.Lines.Add(itemResult.message);
+  end;
+
+end;
+
+procedure TForm1.btnTransferCardClick(Sender: TObject);
+var
+  simpleResult : TSimpleResult;
+begin
+  simpleResult := transferCard(TOKEN, 1, 2);
+
+  memo1.Lines.Clear;
+  if (simpleResult.success) then
+  begin
+    memo1.Lines.Add('OK');
+  end else begin
+    memo1.Lines.Add(simpleResult.message);
+  end;
+
+end;
+
+procedure TForm1.btnCreateCardItemClick(Sender: TObject);
+var
+  itemResult : TItemResult;
+  product : TOrderProduct;
+  item: TOrderItem;
+begin
+  product := TOrderProduct.Create;
+  product.code := '106';
+  product.name := 'Chopp da Casa 600ml';
+  product.price := 6.50;
+  product.quantity := 1;
+
+  itemResult := createCardItem(TOKEN, 1, product);
+
+  memo1.Lines.Clear;
+  if (itemResult.success) then
+  begin
+    item := itemResult.data;
+    memo1.Lines.Add(item.name);
+  end else begin
+    memo1.Lines.Add(itemResult.message);
+  end;
+
+end;
+
+procedure TForm1.btnUpdateCardItemClick(Sender: TObject);
+var
+  itemResult : TItemResult;
+  item: TOrderItem;
+begin
+  itemResult := updateCardItem(TOKEN, 1, 'id_product', 1, 2.90);
+
+  memo1.Lines.Clear;
+  if (itemResult.success) then
+  begin
+    item := itemResult.data;
+    memo1.Lines.Add(item.name);
+  end else begin
+    memo1.Lines.Add(itemResult.message);
+  end;
+
+end;
+
+procedure TForm1.btnTransferCardItemClick(Sender: TObject);
+var
+  itemResult : TItemResult;
+  item: TOrderItem;
+begin
+  itemResult := transferCardItem(TOKEN, 1, 2, 'id_product');
+
+  memo1.Lines.Clear;
+  if (itemResult.success) then
+  begin
+    item := itemResult.data;
+    memo1.Lines.Add(item.name);
+  end else begin
+    memo1.Lines.Add(itemResult.message);
+  end;
+
+end;
+
+procedure TForm1.btnTransferCardItemQtdClick(Sender: TObject);
+var
+  itemResult : TItemResult;
+  item: TOrderItem;
+begin
+  itemResult := transferCardItemQtd(TOKEN, 1, 2, 'id_product', 1);
+
+  memo1.Lines.Clear;
+  if (itemResult.success) then
+  begin
+    item := itemResult.data;
+    memo1.Lines.Add(item.name);
+  end else begin
+    memo1.Lines.Add(itemResult.message);
+  end;
+
 end;
 
 end.
