@@ -94,6 +94,7 @@ uses
       date                : PChar;
       table               : Integer;
       card                : Integer;
+      waiter              : PChar;
       items               : TListOrderItem;
 
       constructor Create;
@@ -214,8 +215,91 @@ uses
   end;
 
 
+  //EVENT
 
+  type
+    TEventTheCheck = class
+      table               : PChar;
+      card                : PChar;
+      waiter              : PChar;
+      splitWith           : PChar;
+  end;
 
+  type
+    TEventCallWaiter = class
+      table               : PChar;
+      waiter              : PChar;
+      options             : TStringList;
+
+      constructor Create;
+      Destructor Destroy;
+  end;
+
+  type
+    TEvent = class
+      id                  : PChar;
+      date                : PChar;
+      eventType           : PChar;
+      data                : TObject;
+  end;
+
+  type
+    TListEvent = Class( TObjectList )
+      private
+        function GetItems(Index: Integer): TEvent;
+        procedure SetItems(Index: Integer; const Value: TEvent);
+      public
+        function Add(AObject: TEvent): Integer;
+        property Items[Index: Integer]: TEvent read GetItems write SetItems; default;
+  End;
+
+  type
+    TEventResult = class
+      success             : Boolean;
+      message             : PChar;
+      responseCode        : Integer;
+      data                : TListEvent;
+      count               : Integer;
+
+      constructor Create;
+      Destructor Destroy;
+  end;
+
+  Constructor TEventResult.Create;
+  begin
+    data := TListEvent.Create;
+  end;
+
+  Destructor TEventResult.Destroy;
+  begin
+    FreeAndNil(data);
+  end;
+
+  function TListEvent.GetItems(Index: Integer): TEvent;
+  begin
+    Result := TEvent(inherited Items[Index]);
+  end;
+
+  procedure TListEvent.SetItems(Index: Integer;
+  const Value: TEvent);
+  begin
+    inherited Items[Index] := Value;
+  end;
+
+  function TListEvent.Add(AObject: TEvent): Integer;
+  begin
+    Result := inherited Add(AObject);
+  end;
+
+  Constructor TEventCallWaiter.Create;
+  begin
+    options := TStringList.Create;
+  end;
+
+  Destructor TEventCallWaiter.Destroy;
+  begin
+    FreeAndNil(options);
+  end;
 
   //PRODUCT
   type
@@ -773,6 +857,85 @@ begin
 end;
 
 
+
+//EVENT
+function getAllEvents(token: String): TEventResult;stdcall;
+var
+  eventResult: TEventResult;
+  jsonObj: TJSONObject;
+  x, y: Integer;
+  event: TEvent;
+  eventCallWaiter: TEventCallWaiter;
+  eventTheCheck: TEventTheCheck;
+begin
+
+  jsonObj := getJson(token, 'GET', 'events', '');
+
+  eventResult := TEventResult.Create;
+
+  eventResult.success := jsonObj.getBoolean('success');
+  eventResult.message := PChar(jsonObj.getString('message'));
+  eventResult.responseCode := jsonObj.getInt('code');
+
+  if (eventResult.success) then
+  begin
+    eventResult.count := jsonObj.getJSONArray('data').length;
+
+    for x := 0 to jsonObj.getJSONArray('data').length-1 do
+    begin
+      event := TEvent.Create;
+      event.id := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getString('id'));
+      event.date := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getString('date'));
+      event.eventType := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getString('type'));
+
+      if (event.eventType = 'the-check') then
+      begin
+        eventTheCheck := TEventTheCheck.create;
+        eventTheCheck.table := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').getString('table'));
+        if (jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').has('card')) then
+          if (jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').isNull('card') = false) then
+            eventTheCheck.card := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').getString('card'));
+        eventTheCheck.waiter := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').getString('waiter'));
+        eventTheCheck.splitWith := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').getString('split_with'));
+
+        event.data := eventTheCheck;
+      end else if (event.eventType = 'call-waiter') then
+      begin
+        eventCallWaiter := TEventCallWaiter.Create;
+        eventCallWaiter.table := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').getString('table'));
+        eventCallWaiter.waiter := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').getString('waiter'));
+        for y := 0 to jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').getJSONArray('options').length-1 do
+          eventCallWaiter.options.Add(jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').getJSONArray('options').getString(y));
+
+        event.data := eventCallWaiter;
+      end;
+
+      eventResult.data.Add(event);
+    end;
+
+  end else begin
+    eventResult.count := 0;
+  end;
+
+  Result := eventResult;
+end;
+
+function setEventAsReceived(token: String; id: String): TSimpleResult;stdcall;
+var
+  simpleResult: TSimpleResult;
+  jsonObj: TJSONObject;
+begin
+  jsonObj := getJson(token, 'PUT', 'event/' + id + '/received', '');
+
+  simpleResult := TSimpleResult.Create;
+
+  simpleResult.success := jsonObj.getBoolean('success');
+  simpleResult.message := PChar(jsonObj.getString('message'));
+  simpleResult.responseCode := jsonObj.getInt('code');
+  simpleResult.count := 0;
+
+  Result := simpleResult;
+end;
 
 
 //TABLE ACTION
@@ -2019,6 +2182,8 @@ exports
   deleteProduct,
   getAllOrders,
   setOrderAsReceived,
+  getAllEvents,
+  setEventAsReceived,
   closeTable,
   transferTable,
   cancelTable,

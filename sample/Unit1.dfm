@@ -372,4 +372,22 @@ object Form1: TForm1
     TabOrder = 39
     OnClick = btnTransferCardItemQtdClick
   end
+  object btnGetAllEvents: TButton
+    Left = 200
+    Top = 104
+    Width = 185
+    Height = 25
+    Caption = 'getAllEvents'
+    TabOrder = 40
+    OnClick = btnGetAllEventsClick
+  end
+  object btnSetEventAsReceived: TButton
+    Left = 200
+    Top = 136
+    Width = 185
+    Height = 25
+    Caption = 'setEventAsReceived'
+    TabOrder = 41
+    OnClick = btnSetEventAsReceivedClick
+  end
 end

@@ -48,6 +48,8 @@ type
     btnTransferCard: TButton;
     btnTransferCardItem: TButton;
     btnTransferCardItemQtd: TButton;
+    btnGetAllEvents: TButton;
+    btnSetEventAsReceived: TButton;
 
     procedure btnCreateProductClick(Sender: TObject);
     procedure btnBatchProductClick(Sender: TObject);
@@ -88,6 +90,8 @@ type
     procedure btnUpdateCardItemClick(Sender: TObject);
     procedure btnTransferCardItemClick(Sender: TObject);
     procedure btnTransferCardItemQtdClick(Sender: TObject);
+    procedure btnGetAllEventsClick(Sender: TObject);
+    procedure btnSetEventAsReceivedClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -98,7 +102,10 @@ var
   Form1: TForm1;
 
 const
-  TOKEN = 'OIMENU-TOKEN';
+  //TOKEN = 'OIMENU-TOKEN';
+  TOKEN = 'VyI_L6fJHYg5fWuzbKgRWXAJGdPwSAB6';
+
+  function DLL_Serial_Open(b: PByte ): integer; stdcall; external 'sagat.dll';
 
 implementation
 
@@ -254,7 +261,6 @@ begin
   end else begin
     memo1.Lines.Add(simpleResult.message);
   end;
-
 end;
 
 procedure TForm1.btnCloseTableClick(Sender: TObject);
@@ -939,6 +945,57 @@ begin
     memo1.Lines.Add(itemResult.message);
   end;
 
+end;
+
+procedure TForm1.btnGetAllEventsClick(Sender: TObject);
+var
+  eventResult : TEventResult;
+  event : TEvent;
+  x, y: Integer;
+begin
+  eventResult := getAllEvents(TOKEN);
+
+  memo1.Lines.Clear;
+  if (eventResult.success) then
+  begin
+    for x := 0 to eventResult.data.Count - 1 do
+    begin
+      event := eventResult.data.Items[x];
+      memo1.Lines.Add(event.id);
+      memo1.Lines.Add(event.date);
+      memo1.Lines.Add(event.eventType);
+      if (event.eventType = 'the-check') then
+      begin
+        memo1.Lines.Add('  '+TEventTheCheck(event.data).table);
+        memo1.Lines.Add('  '+TEventTheCheck(event.data).card);
+        memo1.Lines.Add('  '+TEventTheCheck(event.data).waiter);
+        memo1.Lines.Add('  '+TEventTheCheck(event.data).splitWith);
+      end else if (event.eventType = 'call-waiter') then
+      begin
+        memo1.Lines.Add('  '+TEventCallWaiter(event.data).table);
+        memo1.Lines.Add('  '+TEventCallWaiter(event.data).waiter);
+        memo1.Lines.Add('  '+TEventCallWaiter(event.data).options.Text);
+      end;
+    end;
+  end else begin
+    memo1.Lines.Add(eventResult.message);
+  end;
+
+end;
+
+procedure TForm1.btnSetEventAsReceivedClick(Sender: TObject);
+var
+  simpleResult : TSimpleResult;
+begin
+  simpleResult := setEventAsReceived(TOKEN, '1e7b5784-40b3-48cb-9019-29dd4cf72aaf');
+
+  memo1.Lines.Clear;
+  if (simpleResult.success) then
+  begin
+    memo1.Lines.Add('OK');
+  end else begin
+    memo1.Lines.Add(simpleResult.message);
+  end;
 end;
 
 end.

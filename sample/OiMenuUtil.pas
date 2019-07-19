@@ -83,6 +83,7 @@ uses
       date                : PChar;
       table               : Integer;
       card                : Integer;
+      waiter              : PChar;
       items               : TListOrderItem;
 
       constructor Create;
@@ -112,6 +113,55 @@ uses
   end;
 
 
+  //EVENT
+
+  type
+    TEventTheCheck = class
+      table               : PChar;
+      card                : PChar;
+      waiter              : PChar;
+      splitWith           : PChar;
+  end;
+
+  type
+    TEventCallWaiter = class
+      table               : PChar;
+      waiter              : PChar;
+      options               : TStringList;
+
+      constructor Create;
+      Destructor Destroy;
+  end;
+
+  type
+    TEvent = class
+      id                  : PChar;
+      date                : PChar;
+      eventType           : PChar;
+      data                : TObject;
+  end;
+
+  type
+    TListEvent = Class( TObjectList )
+      private
+        function GetItems(Index: Integer): TEvent;
+        procedure SetItems(Index: Integer; const Value: TEvent);
+      public
+        function Add(AObject: TEvent): Integer;
+        property Items[Index: Integer]: TEvent read GetItems write SetItems; default;
+  End;
+
+  type
+    TEventResult = class
+      success             : Boolean;
+      message             : PChar;
+      responseCode        : Integer;
+      data                : TListEvent;
+      count               : Integer;
+
+      constructor Create;
+      Destructor Destroy;
+  end;
 
 
   //PRODUCT
@@ -259,6 +309,8 @@ uses
   function deleteProduct(token: String; id: PChar): TSimpleResult; stdcall; external 'oimenuapi.dll';
   function getAllOrders(token: String): TOrderResult; stdcall; external 'oimenuapi.dll';
   function setOrderAsReceived(token: String; id: String): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function getAllEvents(token: String): TEventResult; stdcall; external 'oimenuapi.dll';
+  function setEventAsReceived(token: String; id: String): TSimpleResult; stdcall; external 'oimenuapi.dll';
   function closeTable(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
   function transferTable(token: String; code: Integer; codeNew: Integer ):  TSimpleResult;stdcall; external 'oimenuapi.dll';
   function cancelTable(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
@@ -387,8 +439,43 @@ implementation
   end;
 
 
+  //EVENT
 
+  Constructor TEventResult.Create;
+  begin
+    data := TListEvent.Create;
+  end;
 
+  Destructor TEventResult.Destroy;
+  begin
+    FreeAndNil(data);
+  end;
+
+  function TListEvent.GetItems(Index: Integer): TEvent;
+  begin
+    Result := TEvent(inherited Items[Index]);
+  end;
+
+  procedure TListEvent.SetItems(Index: Integer;
+  const Value: TEvent);
+  begin
+    inherited Items[Index] := Value;
+  end;
+
+  function TListEvent.Add(AObject: TEvent): Integer;
+  begin
+    Result := inherited Add(AObject);
+  end;
+
+  Constructor TEventCallWaiter.Create;
+  begin
+    options := TStringList.Create;
+  end;
+
+  Destructor TEventCallWaiter.Destroy;
+  begin
+    FreeAndNil(options);
+  end;
 
   //PRODUCT
   Constructor TProductResult.Create;
