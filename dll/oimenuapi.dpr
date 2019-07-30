@@ -222,6 +222,7 @@ uses
       table               : PChar;
       card                : PChar;
       waiter              : PChar;
+      document            : PChar;
       splitWith           : PChar;
   end;
 
@@ -896,6 +897,7 @@ begin
           if (jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').isNull('card') = false) then
             eventTheCheck.card := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').getString('card'));
         eventTheCheck.waiter := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').getString('waiter'));
+        eventTheCheck.document := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').getString('document'));
         eventTheCheck.splitWith := PChar(jsonObj.getJSONArray('data').getJSONObject(x).getJSONObject('data').getString('split_with'));
 
         event.data := eventTheCheck;
@@ -979,6 +981,23 @@ var
   jsonObj: TJSONObject;
 begin
   jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(code) + '/cancel', '');
+
+  simpleResult := TSimpleResult.Create;
+
+  simpleResult.success := jsonObj.getBoolean('success');
+  simpleResult.message := PChar(jsonObj.getString('message'));
+  simpleResult.responseCode := jsonObj.getInt('code');
+  simpleResult.count := 0;
+
+  Result := simpleResult;
+end;
+
+function reopenTable(token: String; code: Integer ): TSimpleResult;stdcall;
+var
+  simpleResult: TSimpleResult;
+  jsonObj: TJSONObject;
+begin
+  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(code) + '/reopen', '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -1346,6 +1365,23 @@ var
   jsonObj: TJSONObject;
 begin
   jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(code) + '/cancel', '');
+
+  simpleResult := TSimpleResult.Create;
+
+  simpleResult.success := jsonObj.getBoolean('success');
+  simpleResult.message := PChar(jsonObj.getString('message'));
+  simpleResult.responseCode := jsonObj.getInt('code');
+  simpleResult.count := 0;
+
+  Result := simpleResult;
+end;
+
+function reopenCard(token: String; code: Integer ): TSimpleResult;stdcall;
+var
+  simpleResult: TSimpleResult;
+  jsonObj: TJSONObject;
+begin
+  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(code) + '/reopen', '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -2187,6 +2223,7 @@ exports
   closeTable,
   transferTable,
   cancelTable,
+  reopenTable,
   createTableItem,
   updateTableItem,
   transferTableItem,
@@ -2196,6 +2233,7 @@ exports
   closeCard,
   transferCard,
   cancelCard,
+  reopenCard,
   createCardItem,
   updateCardItem,
   transferCardItem,

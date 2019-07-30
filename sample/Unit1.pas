@@ -50,6 +50,8 @@ type
     btnTransferCardItemQtd: TButton;
     btnGetAllEvents: TButton;
     btnSetEventAsReceived: TButton;
+    btnReopenTable: TButton;
+    btnReopenCard: TButton;
 
     procedure btnCreateProductClick(Sender: TObject);
     procedure btnBatchProductClick(Sender: TObject);
@@ -92,6 +94,8 @@ type
     procedure btnTransferCardItemQtdClick(Sender: TObject);
     procedure btnGetAllEventsClick(Sender: TObject);
     procedure btnSetEventAsReceivedClick(Sender: TObject);
+    procedure btnReopenTableClick(Sender: TObject);
+    procedure btnReopenCardClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -102,8 +106,7 @@ var
   Form1: TForm1;
 
 const
-  //TOKEN = 'OIMENU-TOKEN';
-  TOKEN = 'VyI_L6fJHYg5fWuzbKgRWXAJGdPwSAB6';
+  TOKEN = 'OIMENU-TOKEN';
 
   function DLL_Serial_Open(b: PByte ): integer; stdcall; external 'sagat.dll';
 
@@ -996,6 +999,39 @@ begin
   end else begin
     memo1.Lines.Add(simpleResult.message);
   end;
+end;
+
+procedure TForm1.btnReopenTableClick(Sender: TObject);
+var
+  simpleResult : TSimpleResult;
+begin
+  simpleResult := reopenTable(TOKEN, 1);
+
+  memo1.Lines.Clear;
+  if (simpleResult.success) then
+  begin
+    memo1.Lines.Add('OK');
+  end else begin
+    memo1.Lines.Add(simpleResult.message);
+  end;
+
+
+end;
+
+procedure TForm1.btnReopenCardClick(Sender: TObject);
+var
+  simpleResult : TSimpleResult;
+begin
+  simpleResult := reopenCard(TOKEN, 1);
+
+  memo1.Lines.Clear;
+  if (simpleResult.success) then
+  begin
+    memo1.Lines.Add('OK');
+  end else begin
+    memo1.Lines.Add(simpleResult.message);
+  end;
+
 end;
 
 end.

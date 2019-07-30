@@ -120,6 +120,7 @@ uses
       table               : PChar;
       card                : PChar;
       waiter              : PChar;
+      document              : PChar;
       splitWith           : PChar;
   end;
 
@@ -314,6 +315,7 @@ uses
   function closeTable(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
   function transferTable(token: String; code: Integer; codeNew: Integer ):  TSimpleResult;stdcall; external 'oimenuapi.dll';
   function cancelTable(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function reopenTable(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
   function createTableItem(token: String; codeTable: Integer; product: TOrderProduct): TItemResult;stdcall; external 'oimenuapi.dll';
   function updateTableItem(token: String; codeTable: Integer; idItem: String; quantity: Integer; price: Double ): TItemResult;stdcall external 'oimenuapi.dll';
   function transferTableItem(token: String; codeTable: Integer; codeTableNew: Integer; idItem: String): TItemResult;stdcall; external 'oimenuapi.dll';
@@ -323,6 +325,7 @@ uses
   function closeCard(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
   function transferCard(token: String; code: Integer; codeNew: Integer ): TSimpleResult;stdcall; external 'oimenuapi.dll';
   function cancelCard(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function reopenCard(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
   function createCardItem(token: String; codeCard: Integer; product: TOrderProduct): TItemResult;stdcall; external 'oimenuapi.dll';
   function updateCardItem(token: String; codeCard: Integer; idItem: String; quantity: Integer; price: Double ): TItemResult;stdcall; external 'oimenuapi.dll';
   function transferCardItem(token: String; codeCard: Integer; codeCardNew: Integer; idItem: String): TItemResult;stdcall; external 'oimenuapi.dll';

@@ -95,7 +95,7 @@ object Form1: TForm1
   end
   object btnCancelTableItem: TButton
     Left = 392
-    Top = 232
+    Top = 264
     Width = 185
     Height = 25
     Caption = 'cancelTableItem'
@@ -122,7 +122,7 @@ object Form1: TForm1
   end
   object btnCancelTableItemQtd: TButton
     Left = 392
-    Top = 264
+    Top = 296
     Width = 185
     Height = 25
     Caption = 'cancelTableItem (Qtd)'
@@ -140,7 +140,7 @@ object Form1: TForm1
   end
   object btnCancelCardItem: TButton
     Left = 584
-    Top = 232
+    Top = 264
     Width = 185
     Height = 25
     Caption = 'cancelCardItem'
@@ -149,7 +149,7 @@ object Form1: TForm1
   end
   object btnCancelCardItemQtd: TButton
     Left = 584
-    Top = 264
+    Top = 296
     Width = 185
     Height = 25
     Caption = 'cancelCardItem (Qtd)'
@@ -293,7 +293,7 @@ object Form1: TForm1
   end
   object btnCreateTableItem: TButton
     Left = 392
-    Top = 104
+    Top = 136
     Width = 185
     Height = 25
     Caption = 'crateTableItem'
@@ -302,7 +302,7 @@ object Form1: TForm1
   end
   object btnUpdateTableItem: TButton
     Left = 392
-    Top = 136
+    Top = 168
     Width = 185
     Height = 25
     Caption = 'updateTableItem'
@@ -311,7 +311,7 @@ object Form1: TForm1
   end
   object btnTrasnferTableItem: TButton
     Left = 392
-    Top = 168
+    Top = 200
     Width = 185
     Height = 25
     Caption = 'transferTableItem'
@@ -320,7 +320,7 @@ object Form1: TForm1
   end
   object btnTrasnferTableItemQtd: TButton
     Left = 392
-    Top = 200
+    Top = 232
     Width = 185
     Height = 25
     Caption = 'transferTableItem (Qtd)'
@@ -329,7 +329,7 @@ object Form1: TForm1
   end
   object btnUpdateCardItem: TButton
     Left = 584
-    Top = 136
+    Top = 168
     Width = 185
     Height = 25
     Caption = 'updateCardItem'
@@ -338,7 +338,7 @@ object Form1: TForm1
   end
   object btnCreateCardItem: TButton
     Left = 584
-    Top = 104
+    Top = 136
     Width = 185
     Height = 25
     Caption = 'crateCardItem'
@@ -356,7 +356,7 @@ object Form1: TForm1
   end
   object btnTransferCardItem: TButton
     Left = 584
-    Top = 168
+    Top = 200
     Width = 185
     Height = 25
     Caption = 'transferCardItem'
@@ -365,7 +365,7 @@ object Form1: TForm1
   end
   object btnTransferCardItemQtd: TButton
     Left = 584
-    Top = 200
+    Top = 232
     Width = 185
     Height = 25
     Caption = 'transferCardItem (Qtd)'
@@ -389,5 +389,23 @@ object Form1: TForm1
     Caption = 'setEventAsReceived'
     TabOrder = 41
     OnClick = btnSetEventAsReceivedClick
+  end
+  object btnReopenTable: TButton
+    Left = 392
+    Top = 104
+    Width = 185
+    Height = 25
+    Caption = 'reopenTable'
+    TabOrder = 42
+    OnClick = btnReopenTableClick
+  end
+  object btnReopenCard: TButton
+    Left = 584
+    Top = 104
+    Width = 185
+    Height = 25
+    Caption = 'reopenCard'
+    TabOrder = 43
+    OnClick = btnReopenCardClick
   end
 end
