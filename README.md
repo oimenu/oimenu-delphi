@@ -24,11 +24,16 @@ Um exemplo de uso do SDK é:
 ```delphi
 // listar pedidos pendentes
 var
+  apiParameter : TRequestParam;
   orderResult : TOrderResult;
   order : TOrder;
   x: Integer;
 begin
-  orderResult := getAllOrders('OIMENU-TOKEN');
+  apiParameter := TRequestParam.create;
+  apiParameter.token := 'OIMENU-TOKEN';
+  apiParameter.customUrl := '';
+    
+  orderResult := getAllOrders(apiParameter);
 
   if (orderResult.success) then
   begin
@@ -43,16 +48,22 @@ end;
 
 // cadastrar um produto do ERP
 var
+  apiParameter : TRequestParam;
   productResult : TProductResult;
   product : TProduct;
 begin
+
+  apiParameter := TRequestParam.create;
+  apiParameter.token := 'OIMENU-TOKEN';
+  apiParameter.customUrl := '';
+    
   product := TProduct.Create;
   product.code := '1006';
   product.name := 'Chopp da Casa 600ml';
   product.price := 6.50;
   product.extraFields := '{"any_field":1}';
 
-  productResult := createProduct('OIMENU-TOKEN', product);
+  productResult := createProduct(apiParameter, product);
 
   
   if (productResult.success) then

@@ -1,9 +1,9 @@
 object Form1: TForm1
   Left = 255
-  Top = 178
-  Width = 812
-  Height = 708
-  Caption = 'OiMenu Demo DLL 1.0'
+  Top = 184
+  Width = 1385
+  Height = 702
+  Caption = 'OiMenu Demo DLL 2.0.3'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -11,6 +11,7 @@ object Form1: TForm1
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object btnCreateProduct: TButton
@@ -24,9 +25,9 @@ object Form1: TForm1
   end
   object Memo1: TMemo
     Left = 24
-    Top = 488
-    Width = 745
-    Height = 161
+    Top = 400
+    Width = 1313
+    Height = 249
     ScrollBars = ssBoth
     TabOrder = 1
   end
@@ -103,8 +104,8 @@ object Form1: TForm1
     OnClick = btnCancelTableItemClick
   end
   object btnGetAllTables: TButton
-    Left = 16
-    Top = 328
+    Left = 776
+    Top = 8
     Width = 185
     Height = 25
     Caption = 'getAllTables'
@@ -157,8 +158,8 @@ object Form1: TForm1
     OnClick = btnCancelCardItemQtdClick
   end
   object btnCreateTable: TButton
-    Left = 16
-    Top = 360
+    Left = 776
+    Top = 40
     Width = 185
     Height = 25
     Caption = 'createTable'
@@ -166,8 +167,8 @@ object Form1: TForm1
     OnClick = btnCreateTableClick
   end
   object btnBatchTables: TButton
-    Left = 16
-    Top = 392
+    Left = 776
+    Top = 72
     Width = 185
     Height = 25
     Caption = 'batchTables'
@@ -175,8 +176,8 @@ object Form1: TForm1
     OnClick = btnBatchTablesClick
   end
   object btnUpdateTable: TButton
-    Left = 16
-    Top = 424
+    Left = 776
+    Top = 104
     Width = 185
     Height = 25
     Caption = 'updateTable'
@@ -184,8 +185,8 @@ object Form1: TForm1
     OnClick = btnUpdateTableClick
   end
   object btnDeleteTable: TButton
-    Left = 16
-    Top = 456
+    Left = 776
+    Top = 136
     Width = 185
     Height = 25
     Caption = 'deleteTable'
@@ -193,8 +194,8 @@ object Form1: TForm1
     OnClick = btnDeleteTableClick
   end
   object btnGetAllCard: TButton
-    Left = 208
-    Top = 328
+    Left = 968
+    Top = 8
     Width = 185
     Height = 25
     Caption = 'getAllCards'
@@ -202,8 +203,8 @@ object Form1: TForm1
     OnClick = btnGetAllCardClick
   end
   object btnCreateCard: TButton
-    Left = 208
-    Top = 360
+    Left = 968
+    Top = 40
     Width = 185
     Height = 25
     Caption = 'createCard'
@@ -211,8 +212,8 @@ object Form1: TForm1
     OnClick = btnCreateCardClick
   end
   object btnBatchCards: TButton
-    Left = 208
-    Top = 392
+    Left = 968
+    Top = 72
     Width = 185
     Height = 25
     Caption = 'batchCards'
@@ -220,8 +221,8 @@ object Form1: TForm1
     OnClick = btnBatchCardsClick
   end
   object btnUpdateCard: TButton
-    Left = 208
-    Top = 424
+    Left = 968
+    Top = 104
     Width = 185
     Height = 25
     Caption = 'updateCard'
@@ -229,8 +230,8 @@ object Form1: TForm1
     OnClick = btnUpdateCardClick
   end
   object btbnDeleteCard: TButton
-    Left = 208
-    Top = 456
+    Left = 968
+    Top = 136
     Width = 185
     Height = 25
     Caption = 'deleteCard'
@@ -238,8 +239,8 @@ object Form1: TForm1
     OnClick = btbnDeleteCardClick
   end
   object btnGetAllUsers: TButton
-    Left = 400
-    Top = 328
+    Left = 1160
+    Top = 8
     Width = 185
     Height = 25
     Caption = 'getAllUsers'
@@ -247,8 +248,8 @@ object Form1: TForm1
     OnClick = btnGetAllUsersClick
   end
   object btnCreateUser: TButton
-    Left = 400
-    Top = 360
+    Left = 1160
+    Top = 40
     Width = 185
     Height = 25
     Caption = 'createUser'
@@ -256,8 +257,8 @@ object Form1: TForm1
     OnClick = btnCreateUserClick
   end
   object btnBatchUser: TButton
-    Left = 400
-    Top = 392
+    Left = 1160
+    Top = 72
     Width = 185
     Height = 25
     Caption = 'batchUser'
@@ -265,8 +266,8 @@ object Form1: TForm1
     OnClick = btnBatchUserClick
   end
   object btnUpdateUser: TButton
-    Left = 400
-    Top = 424
+    Left = 1160
+    Top = 104
     Width = 185
     Height = 25
     Caption = 'updateUser'
@@ -274,8 +275,8 @@ object Form1: TForm1
     OnClick = btnUpdateUserClick
   end
   object btnDeleteUser: TButton
-    Left = 400
-    Top = 456
+    Left = 1160
+    Top = 136
     Width = 185
     Height = 25
     Caption = 'deleteUser'
@@ -407,5 +408,23 @@ object Form1: TForm1
     Caption = 'reopenCard'
     TabOrder = 43
     OnClick = btnReopenCardClick
+  end
+  object btnGetTableBill: TButton
+    Left = 392
+    Top = 328
+    Width = 185
+    Height = 25
+    Caption = 'getTableBill'
+    TabOrder = 44
+    OnClick = btnGetTableBillClick
+  end
+  object btnGetCardBill: TButton
+    Left = 584
+    Top = 328
+    Width = 185
+    Height = 25
+    Caption = 'getCardBill'
+    TabOrder = 45
+    OnClick = btnGetCardBillClick
   end
 end

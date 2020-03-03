@@ -52,6 +52,8 @@ type
     btnSetEventAsReceived: TButton;
     btnReopenTable: TButton;
     btnReopenCard: TButton;
+    btnGetTableBill: TButton;
+    btnGetCardBill: TButton;
 
     procedure btnCreateProductClick(Sender: TObject);
     procedure btnBatchProductClick(Sender: TObject);
@@ -96,6 +98,9 @@ type
     procedure btnSetEventAsReceivedClick(Sender: TObject);
     procedure btnReopenTableClick(Sender: TObject);
     procedure btnReopenCardClick(Sender: TObject);
+    procedure btnGetTableBillClick(Sender: TObject);
+    procedure btnGetCardBillClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
   public
@@ -104,16 +109,24 @@ type
 
 var
   Form1: TForm1;
+  apiParameter: TRequestParam;
 
 const
-  TOKEN = 'OIMENU-TOKEN';
-
-  function DLL_Serial_Open(b: PByte ): integer; stdcall; external 'sagat.dll';
-
+    TOKEN = 'OIMENU-TOKEN';
+    CUSTOMURL = '';
 implementation
 
 
 {$R *.dfm}
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+    apiParameter := TRequestParam.create;
+    apiParameter.token := TOKEN;
+    apiParameter.customUrl := CUSTOMURL;
+
+end;
+
 
 procedure TForm1.btnCreateProductClick(Sender: TObject);
 var
@@ -126,7 +139,7 @@ begin
   product.price := 6.50;
   product.extraFields := '{"any_field":1}';
 
-  productResult := createProduct(TOKEN, product);
+  productResult := createProduct(apiParameter, product);
 
   memo1.Lines.Clear;
   if (productResult.success) then
@@ -166,7 +179,7 @@ begin
   listProduct.Add(product2);
   listProduct.Add(product3);
 
-  simpleResult := batchProducts(TOKEN, listProduct);
+  simpleResult := batchProducts(apiParameter, listProduct);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -188,7 +201,7 @@ begin
   product.name := 'Cerveja Artesanal Suave 300ml';
   product.price := 11.90;
 
-  productResult := updateProduct(TOKEN, product);
+  productResult := updateProduct(apiParameter, product);
 
   memo1.Lines.Clear;
   if (productResult.success) then
@@ -205,7 +218,7 @@ procedure TForm1.btnDeleteProductClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := deleteProduct(TOKEN, '107');
+  simpleResult := deleteProduct(apiParameter, '107');
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -223,7 +236,7 @@ var
   orderItem : TOrderItem;
   x, y: Integer;
 begin
-  orderResult := getAllOrders(TOKEN);
+  orderResult := getAllOrders(apiParameter);
 
   memo1.Lines.Clear;
   if (orderResult.success) then
@@ -255,7 +268,7 @@ procedure TForm1.btnSetOrderAsReceivedClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := setOrderAsReceived(TOKEN, '419096ca-8097-4828-9844-ac3a06adf658');
+  simpleResult := setOrderAsReceived(apiParameter, '419096ca-8097-4828-9844-ac3a06adf658');
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -270,7 +283,7 @@ procedure TForm1.btnCloseTableClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := closeTable(TOKEN, 1);
+  simpleResult := closeTable(apiParameter, 1);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -286,7 +299,7 @@ procedure TForm1.btnCancelTableClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := cancelTable(TOKEN, 1);
+  simpleResult := cancelTable(apiParameter, 1);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -303,7 +316,7 @@ var
   itemResult  : TItemResult;
   x: Integer;
 begin
-  itemResult := cancelTableItem(TOKEN, 1, 'ASDF');
+  itemResult := cancelTableItem(apiParameter, 1, 'ASDF');
 
   memo1.Lines.Clear;
   if (itemResult.success) then
@@ -320,7 +333,7 @@ var
   itemResult  : TItemResult;
   x: Integer;
 begin
-  itemResult := cancelTableItemQtd(TOKEN, 121, 'ASD', 1);
+  itemResult := cancelTableItemQtd(apiParameter, 121, 'ASD', 1);
 
   memo1.Lines.Clear;
   if (itemResult.success) then
@@ -332,11 +345,40 @@ begin
 
 end;
 
+procedure TForm1.btnGetTableBillClick(Sender: TObject);
+var
+  billResult : TBillResult;
+  order : TOrder;
+  orderItem : TOrderItem;
+  x, y: Integer;
+begin
+  billResult := getTableBill(apiParameter, 5);
+
+  memo1.Lines.Clear;
+  memo1.Lines.Add('TOTAL  ' + FloatToStr(billResult.data.total));
+  if (billResult.success) then
+  begin
+    for x := 0 to billResult.data.items.Count - 1 do
+    begin
+        orderItem := billResult.data.items.Items[x];
+        memo1.Lines.Add('  '+orderItem.id);
+        memo1.Lines.Add('  '+orderItem.code);
+        memo1.Lines.Add('  '+orderItem.name);
+        memo1.Lines.Add('  '+IntToStr(orderItem.quantity));
+        memo1.Lines.Add('  '+FloatToStr(orderItem.price));
+        memo1.Lines.Add('  ');
+    end;
+  end else begin
+    memo1.Lines.Add(billResult.message);
+  end;
+
+end;
+
 procedure TForm1.btnCloseCardClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := closeCard(TOKEN, 1);
+  simpleResult := closeCard(apiParameter, 1);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -352,7 +394,7 @@ procedure TForm1.btnCancelCardClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := cancelCard(TOKEN, 1);
+  simpleResult := cancelCard(apiParameter, 1);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -369,7 +411,7 @@ var
   itemResult  : TItemResult;
   x: Integer;
 begin
-  itemResult := cancelCardItem(TOKEN, 1, 'ASDF');
+  itemResult := cancelCardItem(apiParameter, 1, 'ASDF');
 
   memo1.Lines.Clear;
   if (itemResult.success) then
@@ -386,7 +428,7 @@ var
   itemResult  : TItemResult;
   x: Integer;
 begin
-  itemResult := cancelCardItemQtd(TOKEN, 121, 'ASD', 1);
+  itemResult := cancelCardItemQtd(apiParameter, 121, 'ASD', 1);
 
   memo1.Lines.Clear;
   if (itemResult.success) then
@@ -404,7 +446,7 @@ var
   table : TTable;
   x: Integer;
 begin
-  tableResult := getAllTables(TOKEN);
+  tableResult := getAllTables(apiParameter);
 
   memo1.Lines.Clear;
   if (tableResult.success) then
@@ -431,7 +473,7 @@ begin
   table.name := 'Mesa 4';
   table.servicePercentage := 10.00;
 
-  tableResult := createTable(TOKEN, table);
+  tableResult := createTable(apiParameter, table);
 
   memo1.Lines.Clear;
   if (tableResult.success) then
@@ -471,7 +513,7 @@ begin
   listTable.Add(table2);
   listTable.Add(table3);
 
-  simpleResult := batchTables(TOKEN, listTable);
+  simpleResult := batchTables(apiParameter, listTable);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -493,7 +535,7 @@ begin
   table.name := 'Mesa 7 - Área externa';
   table.servicePercentage := 10.00;
 
-  tableResult := updateTable(TOKEN, table);
+  tableResult := updateTable(apiParameter, table);
 
   memo1.Lines.Clear;
   if (tableResult.success) then
@@ -510,7 +552,7 @@ procedure TForm1.btnDeleteTableClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := deleteTable(TOKEN, 7);
+  simpleResult := deleteTable(apiParameter, 7);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -527,7 +569,7 @@ var
   card : TCard;
   x: Integer;
 begin
-  cardResult := getAllCards(TOKEN);
+  cardResult := getAllCards(apiParameter);
 
   memo1.Lines.Clear;
   if (cardResult.success) then
@@ -553,7 +595,7 @@ begin
   card.qrCode := 'qr-code-4';
   card.servicePercentage := 10.00;
 
-  cardResult := createCard(TOKEN, card);
+  cardResult := createCard(apiParameter, card);
 
   memo1.Lines.Clear;
   if (cardResult.success) then
@@ -591,7 +633,7 @@ begin
   listCard.Add(card2);
   listCard.Add(card3);
 
-  simpleResult := batchCards(TOKEN, listCard);
+  simpleResult := batchCards(apiParameter, listCard);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -613,7 +655,7 @@ begin
   card.qrCode := 'qr-code-7-atualizado';
   card.servicePercentage := 15.00;
 
-  cardResult := updateCard(TOKEN, card);
+  cardResult := updateCard(apiParameter, card);
 
   memo1.Lines.Clear;
   if (cardResult.success) then
@@ -629,7 +671,7 @@ procedure TForm1.btbnDeleteCardClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := deleteCard(TOKEN, 7);
+  simpleResult := deleteCard(apiParameter, 7);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -646,7 +688,7 @@ var
   user : TUser;
   x: Integer;
 begin
-  userResult := getAllUsers(TOKEN);
+  userResult := getAllUsers(apiParameter);
 
   memo1.Lines.Clear;
   if (userResult.success) then
@@ -671,7 +713,7 @@ begin
   user.name := 'Beltrano';
   user.active := true;
 
-  userResult := createUser(TOKEN, user);
+  userResult := createUser(apiParameter, user);
 
   memo1.Lines.Clear;
   if (userResult.success) then
@@ -710,7 +752,7 @@ begin
   listUser.Add(user2);
   listUser.Add(user3);
 
-  simpleResult := batchUsers(TOKEN, listUser);
+  simpleResult := batchUsers(apiParameter, listUser);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -732,7 +774,7 @@ begin
   user.name := 'Beltrano da Silva';
   user.active := false;
 
-  userResult := updateUser(TOKEN, user);
+  userResult := updateUser(apiParameter, user);
 
   memo1.Lines.Clear;
   if (userResult.success) then
@@ -748,7 +790,7 @@ procedure TForm1.btnDeleteUserClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := deleteUser(TOKEN, 7);
+  simpleResult := deleteUser(apiParameter, 7);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -763,7 +805,7 @@ procedure TForm1.btnTransferTableClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := transferTable(TOKEN, 2, 1);
+  simpleResult := transferTable(apiParameter, 2, 1);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -787,7 +829,7 @@ begin
   product.price := 6.50;
   product.quantity := 1;
 
-  itemResult := createTableItem(TOKEN, 2, product);
+  itemResult := createTableItem(apiParameter, 2, product);
 
   memo1.Lines.Clear;
   if (itemResult.success) then
@@ -807,7 +849,7 @@ var
   itemResult : TItemResult;
   item: TOrderItem;
 begin
-  itemResult := updateTableItem(TOKEN, 1, 'ASDF', 16, 2.90);
+  itemResult := updateTableItem(apiParameter, 1, 'ASDF', 16, 2.90);
 
   memo1.Lines.Clear;
   if (itemResult.success) then
@@ -825,7 +867,7 @@ var
   itemResult : TItemResult;
   item: TOrderItem;
 begin
-  itemResult := transferTableItem(TOKEN, 2, 1, 'ASDF');
+  itemResult := transferTableItem(apiParameter, 2, 1, 'ASDF');
 
   memo1.Lines.Clear;
   if (itemResult.success) then
@@ -842,7 +884,7 @@ var
   itemResult : TItemResult;
   item: TOrderItem;
 begin
-  itemResult := transferTableItemQtd(TOKEN, 1, 2, 'ASDF', 1);
+  itemResult := transferTableItemQtd(apiParameter, 1, 2, 'ASDF', 1);
 
   memo1.Lines.Clear;
   if (itemResult.success) then
@@ -859,7 +901,7 @@ procedure TForm1.btnTransferCardClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := transferCard(TOKEN, 1, 2);
+  simpleResult := transferCard(apiParameter, 1, 2);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -883,7 +925,7 @@ begin
   product.price := 6.50;
   product.quantity := 1;
 
-  itemResult := createCardItem(TOKEN, 1, product);
+  itemResult := createCardItem(apiParameter, 1, product);
 
   memo1.Lines.Clear;
   if (itemResult.success) then
@@ -901,7 +943,7 @@ var
   itemResult : TItemResult;
   item: TOrderItem;
 begin
-  itemResult := updateCardItem(TOKEN, 1, 'id_product', 1, 2.90);
+  itemResult := updateCardItem(apiParameter, 1, 'id_product', 1, 2.90);
 
   memo1.Lines.Clear;
   if (itemResult.success) then
@@ -919,7 +961,7 @@ var
   itemResult : TItemResult;
   item: TOrderItem;
 begin
-  itemResult := transferCardItem(TOKEN, 1, 2, 'id_product');
+  itemResult := transferCardItem(apiParameter, 1, 2, 'id_product');
 
   memo1.Lines.Clear;
   if (itemResult.success) then
@@ -937,7 +979,7 @@ var
   itemResult : TItemResult;
   item: TOrderItem;
 begin
-  itemResult := transferCardItemQtd(TOKEN, 1, 2, 'id_product', 1);
+  itemResult := transferCardItemQtd(apiParameter, 1, 2, 'id_product', 1);
 
   memo1.Lines.Clear;
   if (itemResult.success) then
@@ -956,7 +998,7 @@ var
   event : TEvent;
   x, y: Integer;
 begin
-  eventResult := getAllEvents(TOKEN);
+  eventResult := getAllEvents(apiParameter);
 
   memo1.Lines.Clear;
   if (eventResult.success) then
@@ -990,7 +1032,7 @@ procedure TForm1.btnSetEventAsReceivedClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := setEventAsReceived(TOKEN, '1e7b5784-40b3-48cb-9019-29dd4cf72aaf');
+  simpleResult := setEventAsReceived(apiParameter, '1e7b5784-40b3-48cb-9019-29dd4cf72aaf');
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -1005,7 +1047,7 @@ procedure TForm1.btnReopenTableClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := reopenTable(TOKEN, 1);
+  simpleResult := reopenTable(apiParameter, 1);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -1022,7 +1064,7 @@ procedure TForm1.btnReopenCardClick(Sender: TObject);
 var
   simpleResult : TSimpleResult;
 begin
-  simpleResult := reopenCard(TOKEN, 1);
+  simpleResult := reopenCard(apiParameter, 1);
 
   memo1.Lines.Clear;
   if (simpleResult.success) then
@@ -1030,6 +1072,35 @@ begin
     memo1.Lines.Add('OK');
   end else begin
     memo1.Lines.Add(simpleResult.message);
+  end;
+
+end;
+
+procedure TForm1.btnGetCardBillClick(Sender: TObject);
+var
+  billResult : TBillResult;
+  order : TOrder;
+  orderItem : TOrderItem;
+  x, y: Integer;
+begin
+  billResult := getCardBill(apiParameter, 5);
+
+  memo1.Lines.Clear;
+  memo1.Lines.Add('TOTAL  ' + FloatToStr(billResult.data.total));
+  if (billResult.success) then
+  begin
+    for x := 0 to billResult.data.items.Count - 1 do
+    begin
+        orderItem := billResult.data.items.Items[x];
+        memo1.Lines.Add('  '+orderItem.id);
+        memo1.Lines.Add('  '+orderItem.code);
+        memo1.Lines.Add('  '+orderItem.name);
+        memo1.Lines.Add('  '+IntToStr(orderItem.quantity));
+        memo1.Lines.Add('  '+FloatToStr(orderItem.price));
+        memo1.Lines.Add('  ');
+    end;
+  end else begin
+    memo1.Lines.Add(billResult.message);
   end;
 
 end;

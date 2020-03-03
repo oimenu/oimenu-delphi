@@ -19,6 +19,13 @@ uses
 
 {$R *.res}
 
+  //PARAM
+  type
+    TRequestParam = class
+      token               : PChar;
+      customUrl           : PChar;
+  end;
+
   //SIMPLE RESULT
   type
     TSimpleResult = class
@@ -123,7 +130,6 @@ uses
       Destructor Destroy;
   end;
 
-
   Constructor TOrderItemOption.Create;
   begin
     notes := TStringList.Create;
@@ -212,6 +218,50 @@ uses
   function TListOrder.Add(AObject: TOrder): Integer;
   begin
     Result := inherited Add(AObject);
+  end;
+
+
+  //BILL
+
+  type
+    TBillItem = class
+      total               : Double;
+      items               : TListOrderItem;
+
+      constructor Create;
+      Destructor Destroy;
+  end;
+
+  type
+    TBillResult = class
+      success             : Boolean;
+      message             : PChar;
+      responseCode        : Integer;
+      data                : TBillItem;
+      count               : Integer;
+
+      constructor Create;
+      Destructor Destroy;
+  end;
+
+  Constructor TBillResult.Create;
+  begin
+    data := TBillItem.Create;
+  end;
+
+  Destructor TBillResult.Destroy;
+  begin
+    FreeAndNil(data);
+  end;
+
+  Constructor TBillItem.Create;
+  begin
+    items := TListOrderItem.Create;
+  end;
+
+  Destructor TBillItem.Destroy;
+  begin
+    FreeAndNil(items);
   end;
 
 
@@ -562,7 +612,7 @@ uses
 
 
 
-function getJson(token: String; method: String; api: String; postJson: String):TJSONObject;
+function getJson(param: TRequestParam; method: String; api: String; postJson: String):TJSONObject;
 var
   url, requestResult : String;
   PostDataStream : TStringStream;
@@ -575,12 +625,15 @@ begin
 
   IdHTTP := TIdHTTP.Create(nil);
   IdHTTP.Request.UserAgent := 'Mozilla/5.0';
-  IdHTTP.Request.CustomHeaders.Add('Authorization:Bearer ' + token);
+  IdHTTP.Request.CustomHeaders.Add('Authorization:Bearer ' + param.token);
 
   IdHTTP.Request.ContentType := 'application/json';
   IdHTTP.Request.CharSet := 'utf-8';
 
-  url := apiUrl + '/api/' + apiVersion + '/' + api;
+  if (Length(param.customUrl) > 0) then
+    url := param.customUrl + '/' + api
+  else
+    url := apiUrl + '/api/' + apiVersion + '/' + api;
 
   try
     try
@@ -634,7 +687,7 @@ end;
 
 
 //PRODUCT
-function createProduct(token: String; product: TProduct): TProductResult;stdcall;
+function createProduct(param: TRequestParam; product: TProduct): TProductResult;stdcall;
 var
   productResult: TProductResult;
   jsonObj: TJSONObject;
@@ -646,7 +699,7 @@ begin
   jsonObj.put('price', product.price);
   jsonObj.put('extra_fields', product.extraFields);
 
-  jsonObj := getJson(token, 'POST', 'product', jsonObj.toString);
+  jsonObj := getJson(param, 'POST', 'product', jsonObj.toString);
 
   productResult := TProductResult.Create;
 
@@ -675,7 +728,7 @@ begin
   Result := productResult;
 end;
 
-function batchProducts(token: String; products: TListProduct): TSimpleResult;stdcall;
+function batchProducts(param: TRequestParam; products: TListProduct): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
@@ -694,7 +747,7 @@ begin
     jsonArray.put(jsonObj);
   end;
 
-  jsonObj := getJson(token, 'POST', 'products', jsonArray.toString);
+  jsonObj := getJson(param, 'POST', 'products', jsonArray.toString);
 
   simpleResult := TSimpleResult.Create;
 
@@ -706,7 +759,7 @@ begin
   Result := simpleResult;
 end;
 
-function updateProduct(token: String; product: TProduct): TProductResult;stdcall;
+function updateProduct(param: TRequestParam; product: TProduct): TProductResult;stdcall;
 var
   productResult: TProductResult;
   jsonObj: TJSONObject;
@@ -718,7 +771,7 @@ begin
   jsonObj.put('price', product.price);
   jsonObj.put('extra_fields', product.extraFields);
 
-  jsonObj := getJson(token, 'PUT', 'product/' + product.code, jsonObj.toString);
+  jsonObj := getJson(param, 'PUT', 'product/' + product.code, jsonObj.toString);
 
   productResult := TProductResult.Create;
 
@@ -747,12 +800,12 @@ begin
   Result := productResult;
 end;
 
-function deleteProduct(token: String; id: PChar): TSimpleResult;stdcall;
+function deleteProduct(param: TRequestParam; id: PChar): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'DELETE', 'product/' + id, '');
+  jsonObj := getJson(param, 'DELETE', 'product/' + id, '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -768,7 +821,7 @@ end;
 
 
 //ORDER
-function getAllOrders(token: String): TOrderResult;stdcall;
+function getAllOrders(param: TRequestParam): TOrderResult;stdcall;
 var
   orderResult: TOrderResult;
   jsonObj: TJSONObject;
@@ -778,7 +831,7 @@ var
   orderItemOption: TOrderItemOption;
 begin
 
-  jsonObj := getJson(token, 'GET', 'orders', '');
+  jsonObj := getJson(param, 'GET', 'orders', '');
 
   orderResult := TOrderResult.Create;
 
@@ -840,12 +893,12 @@ begin
   Result := orderResult;
 end;
 
-function setOrderAsReceived(token: String; id: String): TSimpleResult;stdcall;
+function setOrderAsReceived(param: TRequestParam; id: String): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'PUT', 'order/' + id + '/received', '');
+  jsonObj := getJson(param, 'PUT', 'order/' + id + '/received', '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -860,7 +913,7 @@ end;
 
 
 //EVENT
-function getAllEvents(token: String): TEventResult;stdcall;
+function getAllEvents(param: TRequestParam): TEventResult;stdcall;
 var
   eventResult: TEventResult;
   jsonObj: TJSONObject;
@@ -870,7 +923,7 @@ var
   eventTheCheck: TEventTheCheck;
 begin
 
-  jsonObj := getJson(token, 'GET', 'events', '');
+  jsonObj := getJson(param, 'GET', 'events', '');
 
   eventResult := TEventResult.Create;
 
@@ -922,12 +975,12 @@ begin
   Result := eventResult;
 end;
 
-function setEventAsReceived(token: String; id: String): TSimpleResult;stdcall;
+function setEventAsReceived(param: TRequestParam; id: String): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'PUT', 'event/' + id + '/received', '');
+  jsonObj := getJson(param, 'PUT', 'event/' + id + '/received', '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -941,12 +994,12 @@ end;
 
 
 //TABLE ACTION
-function closeTable(token: String; code: Integer ): TSimpleResult;stdcall;
+function closeTable(param: TRequestParam; code: Integer ): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(code) + '/close', '');
+  jsonObj := getJson(param, 'PUT', 'table/' + IntToStr(code) + '/close', '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -958,12 +1011,12 @@ begin
   Result := simpleResult;
 end;
 
-function transferTable(token: String; code: Integer; codeNew: Integer ): TSimpleResult;stdcall;
+function transferTable(param: TRequestParam; code: Integer; codeNew: Integer ): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(code) + '/transfer', '{"new_table":'+IntToStr(codeNew)+'}');
+  jsonObj := getJson(param, 'PUT', 'table/' + IntToStr(code) + '/transfer', '{"new_table":'+IntToStr(codeNew)+'}');
 
   simpleResult := TSimpleResult.Create;
 
@@ -975,12 +1028,12 @@ begin
   Result := simpleResult;
 end;
 
-function cancelTable(token: String; code: Integer ): TSimpleResult;stdcall;
+function cancelTable(param: TRequestParam; code: Integer ): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(code) + '/cancel', '');
+  jsonObj := getJson(param, 'PUT', 'table/' + IntToStr(code) + '/cancel', '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -992,12 +1045,12 @@ begin
   Result := simpleResult;
 end;
 
-function reopenTable(token: String; code: Integer ): TSimpleResult;stdcall;
+function reopenTable(param: TRequestParam; code: Integer ): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(code) + '/reopen', '');
+  jsonObj := getJson(param, 'PUT', 'table/' + IntToStr(code) + '/reopen', '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -1009,7 +1062,7 @@ begin
   Result := simpleResult;
 end;
 
-function createTableItem(token: String; codeTable: Integer; product: TOrderProduct): TItemResult;stdcall;
+function createTableItem(param: TRequestParam; codeTable: Integer; product: TOrderProduct): TItemResult;stdcall;
 var
   itemResult: TItemResult;
   jsonObj: TJSONObject;
@@ -1023,7 +1076,7 @@ begin
   jsonObj.put('price', product.price);
   jsonObj.put('quantity', product.quantity);
 
-  jsonObj := getJson(token, 'POST', 'table/' + IntToStr(codeTable) + '/item', jsonObj.toString);
+  jsonObj := getJson(param, 'POST', 'table/' + IntToStr(codeTable) + '/item', jsonObj.toString);
 
   itemResult := TItemResult.Create;
 
@@ -1070,7 +1123,7 @@ begin
   Result := itemResult;
 end;
 
-function updateTableItem(token: String; codeTable: Integer; idItem: String; quantity: Integer; price: Double ): TItemResult;stdcall;
+function updateTableItem(param: TRequestParam; codeTable: Integer; idItem: String; quantity: Integer; price: Double ): TItemResult;stdcall;
 var
   itemResult: TItemResult;
   jsonObj: TJSONObject;   
@@ -1082,7 +1135,7 @@ begin
   jsonObj.put('quantity', quantity);
   jsonObj.put('price', price);
 
-  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(codeTable) + '/item/' + idItem, jsonObj.toString);
+  jsonObj := getJson(param, 'PUT', 'table/' + IntToStr(codeTable) + '/item/' + idItem, jsonObj.toString);
 
   itemResult := TItemResult.Create;
 
@@ -1129,7 +1182,7 @@ begin
   Result := itemResult;
 end;
 
-function transferTableItem(token: String; codeTable: Integer; codeTableNew: Integer; idItem: String): TItemResult;stdcall;
+function transferTableItem(param: TRequestParam; codeTable: Integer; codeTableNew: Integer; idItem: String): TItemResult;stdcall;
 var
   itemResult: TItemResult;
   jsonObj: TJSONObject;
@@ -1140,7 +1193,7 @@ begin
   jsonObj := TJSONObject.create;
   jsonObj.put('new_table', codeTableNew);
 
-  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(codeTable) + '/item/' + idItem + '/transfer', jsonObj.toString);
+  jsonObj := getJson(param, 'PUT', 'table/' + IntToStr(codeTable) + '/item/' + idItem + '/transfer', jsonObj.toString);
 
   itemResult := TItemResult.Create;
 
@@ -1150,7 +1203,7 @@ begin
   Result := itemResult;
 end;
 
-function transferTableItemQtd(token: String; codeTable: Integer; codeTableNew: Integer; idItem: String; quantity: Integer): TItemResult;stdcall;
+function transferTableItemQtd(param: TRequestParam; codeTable: Integer; codeTableNew: Integer; idItem: String; quantity: Integer): TItemResult;stdcall;
 var
   itemResult: TItemResult;
   jsonObj: TJSONObject;
@@ -1163,7 +1216,7 @@ begin
   jsonObj.put('new_table', codeTableNew);
   jsonObj.put('quantity', quantity);
 
-  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(codeTable) + '/item/' + idItem + '/transfer', jsonObj.toString);
+  jsonObj := getJson(param, 'PUT', 'table/' + IntToStr(codeTable) + '/item/' + idItem + '/transfer', jsonObj.toString);
 
   itemResult := TItemResult.Create;
 
@@ -1210,7 +1263,7 @@ begin
   Result := itemResult;
 end;
 
-function cancelTableItem(token: String; code: Integer; idItem: String ): TItemResult; stdcall;
+function cancelTableItem(param: TRequestParam; code: Integer; idItem: String ): TItemResult; stdcall;
 var
   itemResult: TItemResult;
   jsonObj: TJSONObject;
@@ -1218,7 +1271,7 @@ var
   orderItemOption: TOrderItemOption;
   x, y: Integer;
 begin
-  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(code) + '/item/' + idItem + '/cancel', '');
+  jsonObj := getJson(param, 'PUT', 'table/' + IntToStr(code) + '/item/' + idItem + '/cancel', '');
 
   itemResult := TItemResult.Create;
 
@@ -1266,7 +1319,7 @@ begin
 end;
 
 
-function cancelTableItemQtd(token: String; code: Integer; idItem: String; quantity: Integer ): TItemResult; stdcall;
+function cancelTableItemQtd(param: TRequestParam; code: Integer; idItem: String; quantity: Integer ): TItemResult; stdcall;
 var
   itemResult: TItemResult;
   jsonObj: TJSONObject;
@@ -1274,7 +1327,7 @@ var
   orderItemOption: TOrderItemOption;
   x, y: Integer;
 begin
-  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(code) + '/item/' + idItem + '/cancel', '{"quantity":'+IntToStr(quantity)+'}');
+  jsonObj := getJson(param, 'PUT', 'table/' + IntToStr(code) + '/item/' + idItem + '/cancel', '{"quantity":'+IntToStr(quantity)+'}');
 
   itemResult := TItemResult.Create;
 
@@ -1321,16 +1374,84 @@ begin
   Result := itemResult;
 end;
 
+function getBill(param: TRequestParam; url: String): TBillResult;
+var
+  billResult: TBillResult;
+  jsonObj: TJSONObject;
+  x, y, z, w: Integer;
+  orderItem: TOrderItem;
+  orderItemOption: TOrderItemOption;
+begin
 
+  jsonObj := getJson(param, 'GET', url, '');
 
+  billResult := TBillResult.Create;
+
+  billResult.success := jsonObj.getBoolean('success');
+  billResult.message := PChar(jsonObj.getString('message'));
+  billResult.responseCode := jsonObj.getInt('code');
+
+  if (billResult.success) then
+  begin
+    billResult.count := 1;
+    billResult.data.total := jsonObj.getJSONObject('data').getDouble('total');
+
+      for y := 0 to jsonObj.getJSONObject('data').getJSONArray('items').length-1 do
+      begin
+        orderItem := TOrderItem.Create;
+        orderItem.id := PChar(jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getString('id'));
+        orderItem.code := PChar(jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getString('code'));
+        orderItem.name := PChar(jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getString('name'));
+        orderItem.quantity := jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getInt('quantity');
+        orderItem.price := jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getDouble('price');
+
+        for z := 0 to jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getJSONArray('notes').length-1 do
+          orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getJSONArray('notes').getString(z));
+
+        orderItem.extraFields := PChar(jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getString('extra_fields'));
+
+        for z := 0 to jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getJSONArray('options').length-1 do
+        begin
+           orderItemOption := TOrderItemOption.Create;
+           orderItemOption.id := PChar(jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getJSONArray('options').getJSONObject(z).getString('id'));
+           orderItemOption.optionId := PChar(jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getJSONArray('options').getJSONObject(z).getString('option_id'));
+           orderItemOption.code := PChar(jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getJSONArray('options').getJSONObject(z).getString('code'));
+           orderItemOption.name := PChar(jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getJSONArray('options').getJSONObject(z).getString('name'));
+           orderItemOption.quantity := jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getJSONArray('options').getJSONObject(z).getInt('quantity');
+           orderItemOption.price := jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getJSONArray('options').getJSONObject(z).getDouble('price');
+
+           for w := 0 to jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getJSONArray('options').getJSONObject(z).getJSONArray('notes').length-1 do
+              orderItem.notes.Add(jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getJSONArray('options').getJSONObject(z).getJSONArray('notes').getString(w));
+
+           orderItemOption.extraFields := PChar(jsonObj.getJSONObject('data').getJSONArray('items').getJSONObject(y).getJSONArray('options').getJSONObject(z).getString('extra_fields'));
+           orderItem.options.Add(orderItemOption);
+        end;
+        billResult.data.items.Add(orderItem);
+    end;
+  end else begin
+    billResult.count := 0;
+  end;
+
+  Result := billResult;
+end;
+
+function getTableBill(param: TRequestParam; code: Integer): TBillResult;stdcall;
+begin
+  Result := getBill(param, 'table/' + IntToStr(code) + '/bill');
+end;
+
+function getCardBill(param: TRequestParam; code: Integer): TBillResult;stdcall;
+begin
+  Result := getBill(param, 'card/' + IntToStr(code) + '/bill');
+end;
 
 //CARD ACTION
-function closeCard(token: String; code: Integer ): TSimpleResult;stdcall;
+function closeCard(param: TRequestParam; code: Integer ): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(code) + '/close', '');
+  jsonObj := getJson(param, 'PUT', 'card/' + IntToStr(code) + '/close', '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -1342,12 +1463,12 @@ begin
   Result := simpleResult;
 end;
 
-function transferCard(token: String; code: Integer; codeNew: Integer ): TSimpleResult;stdcall;
+function transferCard(param: TRequestParam; code: Integer; codeNew: Integer ): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(code) + '/transfer', '{"new_card":'+IntToStr(codeNew)+'}');
+  jsonObj := getJson(param, 'PUT', 'card/' + IntToStr(code) + '/transfer', '{"new_card":'+IntToStr(codeNew)+'}');
 
   simpleResult := TSimpleResult.Create;
 
@@ -1359,12 +1480,12 @@ begin
   Result := simpleResult;
 end;
 
-function cancelCard(token: String; code: Integer ): TSimpleResult;stdcall;
+function cancelCard(param: TRequestParam; code: Integer ): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(code) + '/cancel', '');
+  jsonObj := getJson(param, 'PUT', 'card/' + IntToStr(code) + '/cancel', '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -1376,12 +1497,12 @@ begin
   Result := simpleResult;
 end;
 
-function reopenCard(token: String; code: Integer ): TSimpleResult;stdcall;
+function reopenCard(param: TRequestParam; code: Integer ): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(code) + '/reopen', '');
+  jsonObj := getJson(param, 'PUT', 'card/' + IntToStr(code) + '/reopen', '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -1393,7 +1514,7 @@ begin
   Result := simpleResult;
 end;
 
-function createCardItem(token: String; codeCard: Integer; product: TOrderProduct): TItemResult;stdcall;
+function createCardItem(param: TRequestParam; codeCard: Integer; product: TOrderProduct): TItemResult;stdcall;
 var
   itemResult: TItemResult;
   jsonObj: TJSONObject;
@@ -1407,7 +1528,7 @@ begin
   jsonObj.put('price', product.price);
   jsonObj.put('quantity', product.quantity);
 
-  jsonObj := getJson(token, 'POST', 'card/' + IntToStr(codeCard) + '/item', jsonObj.toString);
+  jsonObj := getJson(param, 'POST', 'card/' + IntToStr(codeCard) + '/item', jsonObj.toString);
 
   itemResult := TItemResult.Create;
 
@@ -1454,7 +1575,7 @@ begin
   Result := itemResult;
 end;
 
-function updateCardItem(token: String; codeCard: Integer; idItem: String; quantity: Integer; price: Double ): TItemResult;stdcall;
+function updateCardItem(param: TRequestParam; codeCard: Integer; idItem: String; quantity: Integer; price: Double ): TItemResult;stdcall;
 var
   itemResult: TItemResult;
   jsonObj: TJSONObject;   
@@ -1466,7 +1587,7 @@ begin
   jsonObj.put('quantity', quantity);
   jsonObj.put('price', price);
 
-  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(codeCard) + '/item/' + idItem, jsonObj.toString);
+  jsonObj := getJson(param, 'PUT', 'card/' + IntToStr(codeCard) + '/item/' + idItem, jsonObj.toString);
 
   itemResult := TItemResult.Create;
 
@@ -1513,7 +1634,7 @@ begin
   Result := itemResult;
 end;
 
-function transferCardItem(token: String; codeCard: Integer; codeCardNew: Integer; idItem: String): TItemResult;stdcall;
+function transferCardItem(param: TRequestParam; codeCard: Integer; codeCardNew: Integer; idItem: String): TItemResult;stdcall;
 var
   itemResult: TItemResult;
   jsonObj: TJSONObject;
@@ -1524,7 +1645,7 @@ begin
   jsonObj := TJSONObject.create;
   jsonObj.put('new_table', codeCardNew);
 
-  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(codeCard) + '/item/' + idItem + '/transfer', jsonObj.toString);
+  jsonObj := getJson(param, 'PUT', 'card/' + IntToStr(codeCard) + '/item/' + idItem + '/transfer', jsonObj.toString);
 
   itemResult := TItemResult.Create;
 
@@ -1535,7 +1656,7 @@ begin
   Result := itemResult;
 end;
 
-function transferCardItemQtd(token: String; codeCard: Integer; codeCardNew: Integer; idItem: String; quantity: Integer): TItemResult;stdcall;
+function transferCardItemQtd(param: TRequestParam; codeCard: Integer; codeCardNew: Integer; idItem: String; quantity: Integer): TItemResult;stdcall;
 var
   itemResult: TItemResult;
   jsonObj: TJSONObject;
@@ -1548,7 +1669,7 @@ begin
   jsonObj.put('new_table', codeCardNew);
   jsonObj.put('quantity', quantity);
 
-  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(codeCard) + '/item/' + idItem + '/transfer', jsonObj.toString);
+  jsonObj := getJson(param, 'PUT', 'card/' + IntToStr(codeCard) + '/item/' + idItem + '/transfer', jsonObj.toString);
 
   itemResult := TItemResult.Create;
 
@@ -1595,7 +1716,7 @@ begin
   Result := itemResult;
 end;
 
-function cancelCardItem(token: String; code: Integer; idItem: String ): TItemResult; stdcall;
+function cancelCardItem(param: TRequestParam; code: Integer; idItem: String ): TItemResult; stdcall;
 var
   itemResult: TItemResult;
   jsonObj: TJSONObject;
@@ -1603,7 +1724,7 @@ var
   orderItemOption: TOrderItemOption;
   x, y: Integer;
 begin
-  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(code) + '/item/' + idItem + '/cancel', '');
+  jsonObj := getJson(param, 'PUT', 'card/' + IntToStr(code) + '/item/' + idItem + '/cancel', '');
 
   itemResult := TItemResult.Create;
 
@@ -1650,7 +1771,7 @@ begin
 end;
 
 
-function cancelCardItemQtd(token: String; code: Integer; idItem: String; quantity: Integer ): TItemResult; stdcall;
+function cancelCardItemQtd(param: TRequestParam; code: Integer; idItem: String; quantity: Integer ): TItemResult; stdcall;
 var
   itemResult: TItemResult;
   jsonObj: TJSONObject;
@@ -1658,7 +1779,7 @@ var
   orderItemOption: TOrderItemOption;
   x, y: Integer;
 begin
-  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(code) + '/item/' + idItem + '/cancel', '{"quantity":'+IntToStr(quantity)+'}');
+  jsonObj := getJson(param, 'PUT', 'card/' + IntToStr(code) + '/item/' + idItem + '/cancel', '{"quantity":'+IntToStr(quantity)+'}');
 
   itemResult := TItemResult.Create;
 
@@ -1710,14 +1831,14 @@ end;
 
 
 //TABLE
-function getAllTables(token: String): TTableResult;stdcall;
+function getAllTables(param: TRequestParam): TTableResult;stdcall;
 var
   tableResult: TTableResult;
   jsonObj: TJSONObject;
   table: TTable;
   x: Integer;
 begin
-  jsonObj := getJson(token, 'GET', 'tables', '');
+  jsonObj := getJson(param, 'GET', 'tables', '');
 
   tableResult := TTableResult.Create;
 
@@ -1743,7 +1864,7 @@ begin
   Result := tableResult;
 end;
 
-function createTable(token: String; table: TTable): TTableResult;stdcall;
+function createTable(param: TRequestParam; table: TTable): TTableResult;stdcall;
 var
   tableResult: TTableResult;
   jsonObj: TJSONObject;
@@ -1754,7 +1875,7 @@ begin
   jsonObj.put('name', table.name);
   jsonObj.put('service_percentage', table.servicePercentage);
 
-  jsonObj := getJson(token, 'POST', 'table', jsonObj.toString);
+  jsonObj := getJson(param, 'POST', 'table', jsonObj.toString);
 
   tableResult := TTableResult.Create;
 
@@ -1782,7 +1903,7 @@ begin
   Result := tableResult;
 end;
 
-function batchTables(token: String; tables: TListTable): TSimpleResult;stdcall;
+function batchTables(param: TRequestParam; tables: TListTable): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
@@ -1800,7 +1921,7 @@ begin
     jsonArray.put(jsonObj);
   end;
 
-  jsonObj := getJson(token, 'POST', 'tables', jsonArray.toString);
+  jsonObj := getJson(param, 'POST', 'tables', jsonArray.toString);
 
   simpleResult := TSimpleResult.Create;
 
@@ -1812,7 +1933,7 @@ begin
   Result := simpleResult;
 end;
 
-function updateTable(token: String; table: TTable): TTableResult;stdcall;
+function updateTable(param: TRequestParam; table: TTable): TTableResult;stdcall;
 var
   tableResult: TTableResult;
   jsonObj: TJSONObject;
@@ -1823,7 +1944,7 @@ begin
   jsonObj.put('name', table.name);
   jsonObj.put('service_percentage', table.servicePercentage);
 
-  jsonObj := getJson(token, 'PUT', 'table/' + IntToStr(table.code), jsonObj.toString);
+  jsonObj := getJson(param, 'PUT', 'table/' + IntToStr(table.code), jsonObj.toString);
 
   tableResult := TTableResult.Create;
 
@@ -1852,12 +1973,12 @@ begin
   Result := tableResult;
 end;
 
-function deleteTable(token: String; id: Integer): TSimpleResult;stdcall;
+function deleteTable(param: TRequestParam; id: Integer): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'DELETE', 'table/' + IntToStr(id), '');
+  jsonObj := getJson(param, 'DELETE', 'table/' + IntToStr(id), '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -1874,14 +1995,14 @@ end;
 
 
 //CARD
-function getAllCards(token: String): TCardResult;stdcall;
+function getAllCards(param: TRequestParam): TCardResult;stdcall;
 var
   cardResult: TCardResult;
   jsonObj: TJSONObject;
   card: TCard;
   x: Integer;
 begin
-  jsonObj := getJson(token, 'GET', 'cards', '');
+  jsonObj := getJson(param, 'GET', 'cards', '');
 
   cardResult := TCardResult.Create;
 
@@ -1907,7 +2028,7 @@ begin
   Result := cardResult;
 end;
 
-function createCard(token: String; card: TCard): TCardResult;stdcall;
+function createCard(param: TRequestParam; card: TCard): TCardResult;stdcall;
 var
   cardResult: TCardResult;
   jsonObj: TJSONObject;
@@ -1918,7 +2039,7 @@ begin
   jsonObj.put('qr_code', card.qrCode);
   jsonObj.put('service_percentage', card.servicePercentage);
 
-  jsonObj := getJson(token, 'POST', 'card', jsonObj.toString);
+  jsonObj := getJson(param, 'POST', 'card', jsonObj.toString);
 
   cardResult := TCardResult.Create;
 
@@ -1946,7 +2067,7 @@ begin
   Result := cardResult;
 end;
 
-function batchCards(token: String; cards: TListCard): TSimpleResult;stdcall;
+function batchCards(param: TRequestParam; cards: TListCard): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
@@ -1964,7 +2085,7 @@ begin
     jsonArray.put(jsonObj);
   end;
 
-  jsonObj := getJson(token, 'POST', 'cards', jsonArray.toString);
+  jsonObj := getJson(param, 'POST', 'cards', jsonArray.toString);
 
   simpleResult := TSimpleResult.Create;
 
@@ -1976,7 +2097,7 @@ begin
   Result := simpleResult;
 end;
 
-function updateCard(token: String; card: TCard): TCardResult;stdcall;
+function updateCard(param: TRequestParam; card: TCard): TCardResult;stdcall;
 var
   cardResult: TCardResult;
   jsonObj: TJSONObject;
@@ -1987,7 +2108,7 @@ begin
   jsonObj.put('qr_code', card.qrCode);
   jsonObj.put('service_percentage', card.servicePercentage);
 
-  jsonObj := getJson(token, 'PUT', 'card/' + IntToStr(card.code), jsonObj.toString);
+  jsonObj := getJson(param, 'PUT', 'card/' + IntToStr(card.code), jsonObj.toString);
 
   cardResult := TCardResult.Create;
 
@@ -2015,12 +2136,12 @@ begin
   Result := cardResult;
 end;
 
-function deleteCard(token: String; id: Integer): TSimpleResult;stdcall;
+function deleteCard(param: TRequestParam; id: Integer): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'DELETE', 'card/' + IntToStr(id), '');
+  jsonObj := getJson(param, 'DELETE', 'card/' + IntToStr(id), '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -2037,14 +2158,14 @@ end;
 
 
 //USER
-function getAllUsers(token: String): TUserResult;stdcall;
+function getAllUsers(param: TRequestParam): TUserResult;stdcall;
 var
   userResult: TUserResult;
   jsonObj: TJSONObject;
   user: TUser;
   x: Integer;
 begin
-  jsonObj := getJson(token, 'GET', 'users', '');
+  jsonObj := getJson(param, 'GET', 'users', '');
 
   userResult := TUserResult.Create;
 
@@ -2070,7 +2191,7 @@ begin
   Result := userResult;
 end;
 
-function createUser(token: String; user: TUser): TUserResult;stdcall;
+function createUser(param: TRequestParam; user: TUser): TUserResult;stdcall;
 var
   userResult: TUserResult;
   jsonObj: TJSONObject;
@@ -2084,7 +2205,7 @@ begin
   else
     jsonObj.put('active', 0);
 
-  jsonObj := getJson(token, 'POST', 'user', jsonObj.toString);
+  jsonObj := getJson(param, 'POST', 'user', jsonObj.toString);
 
   userResult := TUserResult.Create;
 
@@ -2112,7 +2233,7 @@ begin
   Result := userResult;
 end;
 
-function batchUsers(token: String; users: TListUser): TSimpleResult;stdcall;
+function batchUsers(param: TRequestParam; users: TListUser): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
@@ -2133,7 +2254,7 @@ begin
     jsonArray.put(jsonObj);
   end;
 
-  jsonObj := getJson(token, 'POST', 'users', jsonArray.toString);
+  jsonObj := getJson(param, 'POST', 'users', jsonArray.toString);
 
   simpleResult := TSimpleResult.Create;
 
@@ -2145,7 +2266,7 @@ begin
   Result := simpleResult;
 end;
 
-function updateUser(token: String; user: TUser): TUserResult;stdcall;
+function updateUser(param: TRequestParam; user: TUser): TUserResult;stdcall;
 var
   userResult: TUserResult;
   jsonObj: TJSONObject;
@@ -2159,7 +2280,7 @@ begin
   else
     jsonObj.put('active', 1);
 
-  jsonObj := getJson(token, 'PUT', 'user/' + IntToStr(user.code), jsonObj.toString);
+  jsonObj := getJson(param, 'PUT', 'user/' + IntToStr(user.code), jsonObj.toString);
 
   userResult := TUserResult.Create;
 
@@ -2187,12 +2308,12 @@ begin
   Result := userResult;
 end;
 
-function deleteUser(token: String; id: Integer): TSimpleResult;stdcall;
+function deleteUser(param: TRequestParam; id: Integer): TSimpleResult;stdcall;
 var
   simpleResult: TSimpleResult;
   jsonObj: TJSONObject;
 begin
-  jsonObj := getJson(token, 'DELETE', 'user/' + IntToStr(id), '');
+  jsonObj := getJson(param, 'DELETE', 'user/' + IntToStr(id), '');
 
   simpleResult := TSimpleResult.Create;
 
@@ -2230,6 +2351,8 @@ exports
   transferTableItemQtd,
   cancelTableItem,
   cancelTableItemQtd,
+  getTableBill,
+  getCardBill,
   closeCard,
   transferCard,
   cancelCard,

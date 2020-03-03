@@ -1,11 +1,18 @@
 unit OiMenuUtil;
 
-interface
+interface      
 
 uses
   SysUtils,
   Classes,
   Contnrs;
+
+  //PARAM
+  type
+    TRequestParam = class
+      token               : PChar;
+      customUrl           : PChar;
+  end;
 
   //SIMPLE RESULT
   type
@@ -112,6 +119,29 @@ uses
       Destructor Destroy;
   end;
 
+
+  //BILL
+
+  type
+    TBillItem = class
+      total               : Double;
+      items               : TListOrderItem;
+
+      constructor Create;
+      Destructor Destroy;
+  end;
+
+  type
+    TBillResult = class
+      success             : Boolean;
+      message             : PChar;
+      responseCode        : Integer;
+      data                : TBillItem;
+      count               : Integer;
+
+      constructor Create;
+      Destructor Destroy;
+  end;
 
   //EVENT
 
@@ -304,49 +334,51 @@ uses
 
 
 
-  function createProduct(token: String; product: TProduct): TProductResult; stdcall; external 'oimenuapi.dll';
-  function batchProducts(token: String; products: TListProduct): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function updateProduct(token: String; product: TProduct): TProductResult; stdcall; external 'oimenuapi.dll';
-  function deleteProduct(token: String; id: PChar): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function getAllOrders(token: String): TOrderResult; stdcall; external 'oimenuapi.dll';
-  function setOrderAsReceived(token: String; id: String): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function getAllEvents(token: String): TEventResult; stdcall; external 'oimenuapi.dll';
-  function setEventAsReceived(token: String; id: String): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function closeTable(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function transferTable(token: String; code: Integer; codeNew: Integer ):  TSimpleResult;stdcall; external 'oimenuapi.dll';
-  function cancelTable(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function reopenTable(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function createTableItem(token: String; codeTable: Integer; product: TOrderProduct): TItemResult;stdcall; external 'oimenuapi.dll';
-  function updateTableItem(token: String; codeTable: Integer; idItem: String; quantity: Integer; price: Double ): TItemResult;stdcall external 'oimenuapi.dll';
-  function transferTableItem(token: String; codeTable: Integer; codeTableNew: Integer; idItem: String): TItemResult;stdcall; external 'oimenuapi.dll';
-  function transferTableItemQtd(token: String; codeTable: Integer; codeTableNew: Integer; idItem: String; quantity: Integer): TItemResult;stdcall; external 'oimenuapi.dll';
-  function cancelTableItem(token: String; code: Integer; idItem: String ): TItemResult;  stdcall; external 'oimenuapi.dll';
-  function cancelTableItemQtd(token: String; code: Integer; idItem: String; quantity: Integer ): TItemResult;  stdcall; external 'oimenuapi.dll';
-  function closeCard(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function transferCard(token: String; code: Integer; codeNew: Integer ): TSimpleResult;stdcall; external 'oimenuapi.dll';
-  function cancelCard(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function reopenCard(token: String; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function createCardItem(token: String; codeCard: Integer; product: TOrderProduct): TItemResult;stdcall; external 'oimenuapi.dll';
-  function updateCardItem(token: String; codeCard: Integer; idItem: String; quantity: Integer; price: Double ): TItemResult;stdcall; external 'oimenuapi.dll';
-  function transferCardItem(token: String; codeCard: Integer; codeCardNew: Integer; idItem: String): TItemResult;stdcall; external 'oimenuapi.dll';
-  function transferCardItemQtd(token: String; codeCard: Integer; codeCardNew: Integer; idItem: String; quantity: Integer): TItemResult;stdcall; external 'oimenuapi.dll';
-  function cancelCardItem(token: String; code: Integer; idItem: String ): TItemResult;  stdcall; external 'oimenuapi.dll';
-  function cancelCardItemQtd(token: String; code: Integer; idItem: String; quantity: Integer ): TItemResult;  stdcall; external 'oimenuapi.dll';
-  function getAllTables(token: String): TTableResult; stdcall; external 'oimenuapi.dll';
-  function createTable(token: String; table: TTable): TTableResult; stdcall; external 'oimenuapi.dll';
-  function batchTables(token: String; tables: TListTable): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function updateTable(token: String; table: TTable): TTableResult; stdcall; external 'oimenuapi.dll';
-  function deleteTable(token: String; id: Integer): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function getAllCards(token: String): TCardResult; stdcall; external 'oimenuapi.dll';
-  function createCard(token: String; card: TCard): TCardResult; stdcall; external 'oimenuapi.dll';
-  function batchCards(token: String; cards: TListCard): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function updateCard(token: String; card: TCard): TCardResult; stdcall; external 'oimenuapi.dll';
-  function deleteCard(token: String; id: Integer): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function getAllUsers(token: String): TUserResult; stdcall; external 'oimenuapi.dll';
-  function createUser(token: String; user: TUser): TUserResult; stdcall; external 'oimenuapi.dll';
-  function batchUsers(token: String; users: TListUser): TSimpleResult; stdcall; external 'oimenuapi.dll';
-  function updateUser(token: String; user: TUser): TUserResult; stdcall; external 'oimenuapi.dll';
-  function deleteUser(token: String; id: Integer): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function createProduct(param: TRequestParam; product: TProduct): TProductResult; stdcall; external 'oimenuapi.dll';
+  function batchProducts(param: TRequestParam; products: TListProduct): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function updateProduct(param: TRequestParam; product: TProduct): TProductResult; stdcall; external 'oimenuapi.dll';
+  function deleteProduct(param: TRequestParam; id: PChar): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function getAllOrders(param: TRequestParam): TOrderResult; stdcall; external 'oimenuapi.dll';
+  function setOrderAsReceived(param: TRequestParam; id: String): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function getAllEvents(param: TRequestParam): TEventResult; stdcall; external 'oimenuapi.dll';
+  function setEventAsReceived(param: TRequestParam; id: String): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function closeTable(param: TRequestParam; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function transferTable(param: TRequestParam; code: Integer; codeNew: Integer ):  TSimpleResult;stdcall; external 'oimenuapi.dll';
+  function cancelTable(param: TRequestParam; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function reopenTable(param: TRequestParam; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function createTableItem(param: TRequestParam; codeTable: Integer; product: TOrderProduct): TItemResult;stdcall; external 'oimenuapi.dll';
+  function updateTableItem(param: TRequestParam; codeTable: Integer; idItem: String; quantity: Integer; price: Double ): TItemResult;stdcall external 'oimenuapi.dll';
+  function transferTableItem(param: TRequestParam; codeTable: Integer; codeTableNew: Integer; idItem: String): TItemResult;stdcall; external 'oimenuapi.dll';
+  function transferTableItemQtd(param: TRequestParam; codeTable: Integer; codeTableNew: Integer; idItem: String; quantity: Integer): TItemResult;stdcall; external 'oimenuapi.dll';
+  function cancelTableItem(param: TRequestParam; code: Integer; idItem: String ): TItemResult;  stdcall; external 'oimenuapi.dll';
+  function cancelTableItemQtd(param: TRequestParam; code: Integer; idItem: String; quantity: Integer ): TItemResult;  stdcall; external 'oimenuapi.dll';
+  function getTableBill(param: TRequestParam; code: Integer): TBillResult;  stdcall; external 'oimenuapi.dll';
+  function closeCard(param: TRequestParam; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function transferCard(param: TRequestParam; code: Integer; codeNew: Integer ): TSimpleResult;stdcall; external 'oimenuapi.dll';
+  function cancelCard(param: TRequestParam; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function reopenCard(param: TRequestParam; code: Integer ): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function createCardItem(param: TRequestParam; codeCard: Integer; product: TOrderProduct): TItemResult;stdcall; external 'oimenuapi.dll';
+  function updateCardItem(param: TRequestParam; codeCard: Integer; idItem: String; quantity: Integer; price: Double ): TItemResult;stdcall; external 'oimenuapi.dll';
+  function transferCardItem(param: TRequestParam; codeCard: Integer; codeCardNew: Integer; idItem: String): TItemResult;stdcall; external 'oimenuapi.dll';
+  function transferCardItemQtd(param: TRequestParam; codeCard: Integer; codeCardNew: Integer; idItem: String; quantity: Integer): TItemResult;stdcall; external 'oimenuapi.dll';
+  function cancelCardItem(param: TRequestParam; code: Integer; idItem: String ): TItemResult;  stdcall; external 'oimenuapi.dll';
+  function cancelCardItemQtd(param: TRequestParam; code: Integer; idItem: String; quantity: Integer ): TItemResult;  stdcall; external 'oimenuapi.dll';
+  function getCardBill(param: TRequestParam; code: Integer): TBillResult;  stdcall; external 'oimenuapi.dll';
+  function getAllTables(param: TRequestParam): TTableResult; stdcall; external 'oimenuapi.dll';
+  function createTable(param: TRequestParam; table: TTable): TTableResult; stdcall; external 'oimenuapi.dll';
+  function batchTables(param: TRequestParam; tables: TListTable): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function updateTable(param: TRequestParam; table: TTable): TTableResult; stdcall; external 'oimenuapi.dll';
+  function deleteTable(param: TRequestParam; id: Integer): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function getAllCards(param: TRequestParam): TCardResult; stdcall; external 'oimenuapi.dll';
+  function createCard(param: TRequestParam; card: TCard): TCardResult; stdcall; external 'oimenuapi.dll';
+  function batchCards(param: TRequestParam; cards: TListCard): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function updateCard(param: TRequestParam; card: TCard): TCardResult; stdcall; external 'oimenuapi.dll';
+  function deleteCard(param: TRequestParam; id: Integer): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function getAllUsers(param: TRequestParam): TUserResult; stdcall; external 'oimenuapi.dll';
+  function createUser(param: TRequestParam; user: TUser): TUserResult; stdcall; external 'oimenuapi.dll';
+  function batchUsers(param: TRequestParam; users: TListUser): TSimpleResult; stdcall; external 'oimenuapi.dll';
+  function updateUser(param: TRequestParam; user: TUser): TUserResult; stdcall; external 'oimenuapi.dll';
+  function deleteUser(param: TRequestParam; id: Integer): TSimpleResult; stdcall; external 'oimenuapi.dll';
 
 
 implementation
@@ -441,6 +473,27 @@ implementation
     Result := inherited Add(AObject);
   end;
 
+  //BILL
+
+   Constructor TBillResult.Create;
+  begin
+    data := TBillItem.Create;
+  end;
+
+  Destructor TBillResult.Destroy;
+  begin
+    FreeAndNil(data);
+  end;
+
+  Constructor TBillItem.Create;
+  begin
+    items := TListOrderItem.Create;
+  end;
+
+  Destructor TBillItem.Destroy;
+  begin
+    FreeAndNil(items);
+  end;
 
   //EVENT
 
